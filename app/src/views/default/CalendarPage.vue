@@ -154,7 +154,6 @@ watch([events, schedule], () => {
 								type="number"
 								min="1"
 								:max="i === 0 ? 3 : mapCurrent({ xs: 1, sm: 1, md: 2, lg: 3 }).value"
-								clearable
 								hide-details
 							/>
 						</v-col>
