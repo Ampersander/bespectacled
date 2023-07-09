@@ -43,4 +43,22 @@ class Mailer extends AbstractController
 			PHP_EOL . $e;
 		}
     }
+
+	//function to send email when a ticket is bought
+	public function sendTicketEmail(User $user, $event, $ticket): void
+	{
+		$email = (new TemplatedEmail())
+		->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+		->to($user->getEmail())
+		->subject('Your ticket for the event ' . $event->getName() . '!')
+		->htmlTemplate('emails/ticket.html.twig')
+		->context(compact('user', 'event', 'ticket'));
+
+		try {
+			$this->mailer->send($email);
+		} catch (TransportExceptionInterface $e) {
+			PHP_EOL . $e;
+		}
+
+	}
 }

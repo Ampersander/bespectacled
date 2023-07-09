@@ -11,8 +11,6 @@ import EventService from '@/services/event.service'
 import VenueService from '@/services/venue.service'
 import { storeToRefs } from 'pinia'
 
-import StripeCheckout from '@/components/common/StripeCheckout.vue'
-
 const $theme = useTheme()
 const $router = useRouter()
 const $store = useAuthStore()

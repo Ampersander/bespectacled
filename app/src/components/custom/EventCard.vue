@@ -4,6 +4,8 @@ import { ref, toRef } from 'vue'
 import type { Event } from '@/types/event'
 
 import StripeCheckout from '@/components/common/StripeCheckout.vue'
+import StripeElementPayment from '@/components/common/StripeElementPayment.vue'
+
 
 const props = defineProps<{ event: Event }>()
 
@@ -172,7 +174,7 @@ const slides = [
 										</v-list>
 
 										<v-list>
-											<StripeCheckout :event="event" />
+											<StripeElementPayment :event="event" />
 											<!--<v-list-item link prepend-icon="fa fa-ticket" title="Buy Tickets" @click="() => {
 												$router.push({ name: 'ticketing', query: { event: event.id, date: day.date, time } });
 

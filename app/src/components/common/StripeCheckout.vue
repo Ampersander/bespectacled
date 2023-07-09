@@ -41,7 +41,10 @@ export default {
         submit() {
             console.log(this);
             // You will be redirected to Stripe's secure checkout page
-            this.$refs.checkoutRef.redirectToCheckout();
+            this.$refs.checkoutRef.redirectToCheckout((data)=> {
+                console.log(data);
+                console.log(this);
+            });
 
             // You can also pass a callback that will be called after the redirect
 
