@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 import api from '@/utils/api'
+import headers from './headers'
 import type { User } from '@/types/user'
 import type { ListParams } from '@/types/list'
 import { SubmissionError } from '@/utils/error'
@@ -153,7 +154,28 @@ export const useUserListStore = defineStore('userList', {
 			this.toggleLoading()
 
 			try {
-				const response = await api('users', { params })
+				const response = await api('users', { params, authorization: headers().Authorization })
+				const data: PagedCollection<User> = await response.json()
+				const hubUrl = extractHubURL(response)
+
+				this.toggleLoading()
+
+				this.setItems(data['hydra:member'])
+				this.setTotalItems(data['hydra:totalItems'] ?? 0)
+
+				if (hubUrl) this.setHubUrl(hubUrl)
+			} catch (error) {
+				this.toggleLoading()
+
+				if (error instanceof Error) this.setError(error.message)
+			}
+		},
+		async getArtists(params: ListParams) {
+			this.setError('')
+			this.toggleLoading()
+
+			try {
+				const response = await api('artists', { params })
 				const data: PagedCollection<User> = await response.json()
 				const hubUrl = extractHubURL(response)
 

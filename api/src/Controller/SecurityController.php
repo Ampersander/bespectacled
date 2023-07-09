@@ -29,7 +29,7 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    #[Route('/api/forgot-password/', name: 'forgot_password', methods: ['POST'])]
+    #[Route('/api/forgot-password', name: 'forgot_password', methods: ['POST'])]
     public function recoverPassword(RequestStack $requestStack, UserRecoverService $userRecoverService) {
         $request = $requestStack->getCurrentRequest();
         $content = $request->getContent();

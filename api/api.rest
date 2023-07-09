@@ -31,6 +31,11 @@ accept: application/ld+json
 Authorization: Bearer {{token}}
 
 ### Get artists
+GET {{baseUrl}}/artists
+accept: application/ld+json
+###
+
+### Filter artists
 GET {{baseUrl}}/users?roles[]=ROLE_ARTIST
 accept: application/json
 Authorization: Bearer {{token}}
@@ -52,7 +57,7 @@ Content-Type: application/json
 }
 
 ### Get current user
-GET {{baseUrl}}/users/me
+GET {{baseUrl}}/profile
 accept: application/ld+json
 Authorization: Bearer {{token}}
 ###

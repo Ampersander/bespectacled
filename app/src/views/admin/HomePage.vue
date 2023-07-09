@@ -1,35 +1,14 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import UserService from '@/services/user.service'
-import EventService from '@/services/event.service'
-import VenueService from '@/services/venue.service'
-import ScheduleService from '@/services/schedule.service'
-
 const categories = ref([
-	{ name: 'Artist', icon: 'fa fa-user-tie', to: '/artists/', children: [] },
+	{ name: 'User', icon: 'fa fa-user-tie', to: '/users/', children: [] },
 	{ name: 'Event', icon: 'fa fa-star', to: '/events/', children: [] },
 	{ name: 'Venue', icon: 'fa fa-location-dot', to: '/venues/', children: [] },
 	{ name: 'Schedule', icon: 'fa fa-calendar-days', to: '/schedule/', key: 'day', children: [] }
 ])
 
-onMounted(async () => {
-	const { data: artists } = await UserService.all()
-	categories.value[1].children = artists
-
-	const { data: events } = await EventService.all()
-	categories.value[2].children = events
-
-	const { data: venues } = await VenueService.all()
-	categories.value[3].children = venues
-
-	const { data: schedules } = await ScheduleService.all()
-	categories.value[3].children = schedules
-})
-
 const parallax = new URL('@/assets/stadium.jpeg', import.meta.url).href
-
-const cards = ref(['Entities'])
 </script>
 
 <template>

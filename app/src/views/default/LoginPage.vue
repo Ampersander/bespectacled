@@ -1,22 +1,21 @@
 <script setup lang="ts">
 import { onBeforeMount, reactive, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useVuelidate } from '@vuelidate/core'
 import { email, minLength, maxLength, required } from '@vuelidate/validators'
 
 import { useAuthStore, useUtilsStore } from '@/store'
-import { storeToRefs } from 'pinia'
 
 const $router = useRouter()
 const $store = useAuthStore()
 const $utilsStore = useUtilsStore()
 
-const { error, violations } = storeToRefs($store)
+const { user, error, violations } = storeToRefs($store)
 
 const parallax = new URL('@/assets/carnival.jpeg', import.meta.url).href
 
 const valid = ref(true)
-const user = ref($store.user)
 const showPassword = ref(false)
 const inputs = reactive({ email: '', password: '' })
 const form = ref<null | typeof import('vuetify/components')['VForm']>(null)
@@ -28,8 +27,7 @@ const rules = {
 
 const v$ = useVuelidate(rules, inputs)
 
-// TODO handle this in the router.onBeforeEach hook instead
-onBeforeMount(() => user.value && $router.push('/profile'))
+onBeforeMount(() => user?.value && $router.push('/profile'))
 
 const handleLogin = async (user: any) => {
 	if (!valid.value) return
@@ -93,7 +91,7 @@ const handleLogin = async (user: any) => {
 
 			<v-card-actions>
 				<v-btn color="primary" variant="tonal" @click="$router.push('/register')">No account yet?</v-btn>
-				<v-btn color="primary" variant="tonal" @click="$router.push('/forgot-password')">Forgot Password?</v-btn>
+				<!-- <v-btn color="primary" variant="tonal" @click="$router.push('/forgot-password')">Forgot Password?</v-btn> -->
 
 				<v-spacer />
 

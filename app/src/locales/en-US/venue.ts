@@ -1,8 +1,11 @@
 export default {
+	slug: 'Slug',
 	name: 'Name',
 	type: 'Type',
-	seats: 'Seats',
 	price: 'Price',
+	description: 'Description',
+	seats: 'Seats',
+	location: 'Location',
 	src: 'Image',
 	events: 'Events'
 }

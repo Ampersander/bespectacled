@@ -4,8 +4,8 @@ import { useI18n } from 'vue-i18n'
 import type { BreadcrumbValue } from '@/types/breadcrumb'
 
 const { t } = useI18n()
-const props = defineProps<{ breadcrumb: BreadcrumbValue[] }>()
-const items = [{ title: t('admin'), href: '/admin' }, ...props.breadcrumb]
+const props = defineProps<{ main?: boolean, breadcrumb: BreadcrumbValue[] }>()
+const items = [{ title: t(props.main ? 'home' : 'admin'), href: props.main ? '/' : '/admin' }, ...props.breadcrumb]
 </script>
 
 <template>

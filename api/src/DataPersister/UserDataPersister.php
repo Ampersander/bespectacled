@@ -37,12 +37,15 @@ class UserDataPersister /* implements ContextAwareDataPersisterInterface */
 	 */
 	public function persist($data, array $context = [])
 	{
+		$data->setEnabled(true);
+		$data->setRoles(['ROLE_ADMIN']);
+
 		if ($data->getPlainPassword()) {
 			$data->setPassword($this->hasher->hashPassword($data, $data->getPlainPassword()));
 
 			$data->eraseCredentials();
 			$data->setConfirmationToken($this->tokenGenerator->getRandomSecureToken());
-	
+
 			// Send e-mail here...
 			$this->mailer->sendConfirmationEmail($data);
 		}

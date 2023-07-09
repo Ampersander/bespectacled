@@ -179,13 +179,13 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 
 					<v-list>
 						<v-list-item v-if="router.hasRoute('ScheduleShow')" v-for="day, i in item.raw.schedules" :key="i"
-							:title="date.format(day.date, 'normalDateWithWeekday')"
+							:title="date.format(new Date(day.date), 'normalDateWithWeekday')"
 							:subtitle="day.times.join(' • ')"
 							@click="$router.push({ name: 'ScheduleShow', params: { id: day.id } })"
 						/>
 
 						<v-list-item v-else v-for="day, i in item.raw.schedules" :key="-i"
-							:title="date.format(day.date, 'normalDateWithWeekday')"
+							:title="date.format(new Date(day.date), 'normalDateWithWeekday')"
 							:subtitle="day.times.join(' • ')"
 						/>
 					</v-list>

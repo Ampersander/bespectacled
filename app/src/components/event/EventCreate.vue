@@ -18,7 +18,7 @@ const { created, isLoading, violations, error } = storeToRefs(eventCreateStore)
 async function create(item: Event) {
 	await eventCreateStore.create(item)
 	if (!created?.value) return
-	router.push({ name: 'EventUpdate', params: { id: created?.value?.['@id'] } })
+	router.push({ name: 'EventUpdate', params: { id: created?.value?.id } })
 }
 
 onBeforeUnmount(() => eventCreateStore.$reset())

@@ -5,6 +5,7 @@ import type { Booking } from './booking'
 import type { Transaction } from './transaction'
 
 export interface User extends Item {
+	token?: string
 	username: string
 	email: string
 	roles: string[]

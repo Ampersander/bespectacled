@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\VenueRepository;
 use ApiPlatform\Metadata\ApiResource;
+use Gedmo\Mapping\Annotation as Gedmo;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -17,30 +18,34 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
     normalizationContext: ['groups' => ['venue:read']],
     denormalizationContext: ['groups' => ['venue:write']],
     // operations: [
-//         'get' => [
-//             'normalization_context' => ['groups' => ['venue:read']]
-//         ],
-//         'post' => [
-//             'denormalization_context' => ['groups' => ['venue:write']]
-//         ]
-//     ],
-//     itemOperations: [
-//         'get' => [
-//             'normalization_context' => ['groups' => ['venue:read']]
-//         ],
-//         'put' => [
-//             'denormalization_context' => ['groups' => ['venue:write']]
-//         ],
-//         'delete' => [
-//             'denormalization_context' => ['groups' => ['venue:write']]
-//         ]
-//     ]
+    //     'get' => [
+    //         'normalization_context' => ['groups' => ['venue:read']]
+    //     ],
+    //     'post' => [
+    //         'denormalization_context' => ['groups' => ['venue:write']]
+    //     ]
+    // ],
+    // itemOperations: [
+    //     'get' => [
+    //         'normalization_context' => ['groups' => ['venue:read']]
+    //     ],
+    //     'put' => [
+    //         'denormalization_context' => ['groups' => ['venue:write']]
+    //     ],
+    //     'delete' => [
+    //         'denormalization_context' => ['groups' => ['venue:write']]
+    //     ]
+    // ]
 )]
 class Venue
 {
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
     #[Groups(['venue:read', 'event:read'])]
     private ?int $id = null;
+
+    #[Gedmo\Slug(fields: ['name'])]
+    #[ORM\Column(length: 128, unique: true)]
+    private ?string $slug = null;
 
     #[ORM\Column]
     #[Assert\NotBlank]
@@ -54,14 +59,24 @@ class Venue
     private ?string $type = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank, Assert\Positive]
+    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    private ?float $price = null;
+
+    #[ORM\Column(type: 'text')]
+    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    private ?string $description = null;
+
+    #[ORM\Column]
     #[Assert\NotBlank]
     #[Groups(['venue:read', 'venue:write', 'event:read'])]
     private ?int $seats = null;
 
     #[ORM\Column]
-    #[Assert\NotBlank, Assert\Positive]
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 3, max: 255)]
     #[Groups(['venue:read', 'venue:write', 'event:read'])]
-    private ?float $price = null;
+    private ?string $location = null;
 
     #[ORM\Column]
     #[Groups(['venue:read', 'venue:write', 'event:read'])]
@@ -79,6 +94,18 @@ class Venue
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): self
+    {
+        $this->slug = $slug;
+
+        return $this;
     }
 
     public function getName(): ?string
@@ -105,6 +132,30 @@ class Venue
         return $this;
     }
 
+    public function getPrice(): ?float
+    {
+        return $this->price;
+    }
+
+    public function setPrice(float $price): self
+    {
+        $this->price = $price;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
     public function getSeats(): ?int
     {
         return $this->seats;
@@ -117,14 +168,14 @@ class Venue
         return $this;
     }
 
-    public function getPrice(): ?float
+    public function getLocation(): ?string
     {
-        return $this->price;
+        return $this->location;
     }
 
-    public function setPrice(float $price): self
+    public function setLocation(string $location): self
     {
-        $this->price = $price;
+        $this->location = $location;
 
         return $this;
     }

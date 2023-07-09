@@ -13,12 +13,12 @@ const slides = [
 </script>
 
 <template>
-	<v-carousel class="w-auto h-screen mb-6" color="secondary" :cycle="cycle" hide-delimiter-background progress="primary" show-arrows="hover">
+	<v-carousel class="w-auto h-screen mb-6" color="secondary" :cycle="cycle"  hide-delimiter-background progress="primary" show-arrows="hover">
 		<v-carousel-item v-for="(slide, i) in slides" :key="i">
 			<v-parallax :src="slide">
 				<v-sheet color="transparent" class="d-flex flex-column fill-height justify-center align-center text-white">
-					<div :class="[`text-${i === 5 ? 'black' : 'white'}-50`, 'blend text-h1 font-weight-thin mb-4']">BeSpectacled</div>
-					<div class="blend text-h4">Book tickets for events, concerts, and more!</div>
+					<div :class="[`text-${i === 5 ? 'black' : 'white'}-50`, 'mb-4 text-h1 font-weight-black blend']">BeSpectacled</div>
+					<div class="h1 font-weight-black blend">Book tickets for broadway shows, concerts, and more!</div>
 
 					<v-btn color="primary"
 						prepend-icon="fa fa-fade fa-computer-mouse"

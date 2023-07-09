@@ -1,30 +1,45 @@
-<script setup>
-import { computed, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
+<script setup lang="ts">
+import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useTheme } from 'vuetify'
-import { useRouter } from 'vue-router'
-
-import { useAuthStore, useUtilsStore } from '@/store'
-import Carousel from '@/components/custom/Carousel.vue'
-
-import UserService from '@/services/user.service'
-import EventService from '@/services/event.service'
-import VenueService from '@/services/venue.service'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
+import { useDate } from 'vuetify/labs/date'
 
-const $theme = useTheme()
-const $router = useRouter()
-const $store = useAuthStore()
-const $utilsStore = useUtilsStore()
+import Carousel from '@/components/custom/Carousel.vue'
+import NotFound from '@/components/custom/NotFound.vue'
+import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore, useUtilsStore, useVenueListStore } from '@/store'
 
-const { user, error } = storeToRefs($store)
+const date = useDate()
+const theme = useTheme()
+const router = useRouter()
+
+const utilsStore = useUtilsStore()
+
+const store = useAuthStore()
+const { user } = storeToRefs(store)
+
+const userListStore = useUserListStore()
+const { items: users, totalItems: totalUsers, error: userError, isLoading: userIsLoading } = storeToRefs(userListStore)
+
+const eventListStore = useEventListStore()
+const { items: events, totalItems: totalEvents, error: eventError, isLoading: eventIsLoading } = storeToRefs(eventListStore)
+
+const venueListStore = useVenueListStore()
+const { items: venues, totalItems: totalVenues, error: venueError, isLoading: venueIsLoading } = storeToRefs(venueListStore)
+
+const scheduleListStore = useScheduleListStore()
+const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLoading: scheduleIsLoading } = storeToRefs(scheduleListStore)
 
 const tab = ref(null)
+const page = ref('1')
+const order = ref({})
+const scroll = ref(0)
 const search = ref('')
 const dialog = ref(false)
 const drawer = ref(false)
-const scrolled = ref(false)
+const scrolled = computed(() => scroll.value > 50)
 
-user.value = JSON.parse(localStorage.getItem('user') || 'null')
+// user.value = JSON.parse(localStorage.getItem('user') || 'null')
 
 const icons = {
 	broadway: 'fa fa-mask',
@@ -32,85 +47,98 @@ const icons = {
 	other: 'fa fa-question'
 }
 
-const backgroundImage = {
-	events: 'src/assets/stadium.jpeg'
-}[$router.currentRoute.value.name]
+// const backgroundImage = {
+// 	events: 'src/assets/stadium.jpeg'
+// }[$router.currentRoute.value.name]
 
-const categories = ref([
-	{ name: 'Artists', icon: 'fa fa-user', to: '/artists', key: 'username', children: [] },
-	{ name: 'Events', icon: 'fa fa-star', to: '/events', key: 'title', children: [] },
-	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues', key: 'name', children: [] },
-	{ name: 'Calendar', icon: 'fa fa-calendar-days', to: '/calendar' },
-	{ name: 'Ticketing', icon: 'fa fa-ticket', to: '/ticketing' }
+const categories = computed(() => [
+	{ name: 'Artists', icon: 'fa fa-user-tie', to: '/artists', key: 'username', children: users.value as [] },
+	{ name: 'Events', icon: 'fa fa-star', to: '/events', key: 'title', children: events.value as [] },
+	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues', key: 'name', children: venues.value as [] },
+	{ name: 'Calendar', icon: 'fa fa-calendar-days', to: '/calendar', key: 'date', children: schedules.value as [] }
 ])
 
 const filteredCategories = computed(() => {
-	return categories.value.filter(c => c?.children?.length > 0).map(c => {
-		return { ...c, children: c.children.filter(child => child[c.key].toLowerCase().includes(search.value.toLowerCase())) }
+	const filtered = categories.value.filter(c => c.children.length > 0).map(c => {
+		return { ...c, children: c.children.filter((child: any) => child[c.key].toLowerCase().includes(search.value.toLowerCase())) as any[] }
 	})
+
+	// Merge schedules with the same date
+	const formatted = filtered.map(c => {
+		if (c.name === 'Schedules') {
+			const dates = c.children.map((child: any) => child[c.key])
+			const uniqueDates = [...new Set(dates)]
+			const children = uniqueDates.map((date: any) => {
+				const schedules = c.children.filter((child: any) => child[c.key] === date)
+				delete schedules[0]?.event
+				delete schedules[0]?.['@id']
+				return { ...schedules[0], schedules }
+			})
+
+			return { ...c, children }
+		}
+
+		return c
+	})
+
+	return formatted
 })
 
 const sendRequest = async () => {
-	await useEventListStore().getItems({ page: page.value, order: order.value })
-
-	// Make a promise all to get all the data when it's available
-	const [artists, events, venues] = await Promise.all([
-		useUserListStore().getItems({ page: page.value, order: order.value }),
+	await Promise.all([
+		useUserListStore().getArtists({ page: page.value, order: order.value, username: search.value }),
 		useEventListStore().getItems({ page: page.value, order: order.value }),
-		useVenueListStore().getItems({ page: page.value, order: order.value })
+		useVenueListStore().getItems({ page: page.value, order: order.value, name: search.value }),
+		useScheduleListStore().getItems({ page: page.value, order: order.value, 'event.value': search.value })
 	])
 }
 
-const registerShortcuts = e => {
+const debounce = (func: () => void, delay = 500) => {
+	const t = setTimeout(() => func(), delay)
+	return () => clearTimeout(t)
+}
+
+const registerShortcuts = (e: KeyboardEvent) => {
 	if (e.key === '/') dialog.value = true
 	if (e.ctrlKey && e.altKey && e.key === 't') toggle()
 }
 
 const toggle = () => {
-	$utilsStore.toggle()
-	$theme.global.name.value = $utilsStore.dark ? 'dark' : 'light'
+	utilsStore.toggle()
+	theme.global.name.value = utilsStore.dark ? 'dark' : 'light'
 }
 
-const logout = () => $store.logout()
+const logout = () => store.logout()
 
 const resendVerificationEmail = () => {
 	// TODO $store.dispatch('auth/resendVerificationEmail')
 	alert('This feature has not been implemented yet.')
 }
 
-onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'light')
+onBeforeMount(() => theme.global.name.value = utilsStore.dark ? 'dark' : 'light')
 
-onMounted(async () => {
-	// Register shortcuts
-	window.addEventListener('keydown', registerShortcuts)
-
-	// Load data for the search bar
-	const { data: artists } = await UserService.artists()
-	categories.value.find(c => c.name === 'Artists').children = artists
-
-	const { data: events } = await EventService.all()
-	categories.value.find(c => c.name === 'Events').children = events
-
-	const { data: venues } = await VenueService.all()
-	categories.value.find(c => c.name === 'Venues').children = venues
-})
-
+// Register shortcuts
+onMounted(() => window.addEventListener('keydown', registerShortcuts))
 onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
+
+sendRequest()
+
+// watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 </script>
 
 <template>
-	<v-app :dark="$utilsStore.dark">
+	<v-app :dark="utilsStore.dark">
 		<!-- <v-parallax style="background-size: cover;" :src="backgroundImage"> -->
-			<v-app-bar class="ps-4" :height="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 100" :elevation="scrolled ? 4 : 0"  :color="scrolled ? 'primary' : 'transparent'" density="compact" v-scroll="e => scrolled = e.target.scrollingElement.scrollTop > 50" app flat>
-				<v-progress-linear class="position-fixed" :active="$utilsStore.isLoading" color="white" indeterminate />
+			<v-app-bar class="ps-4" :height="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 100" :elevation="scrolled ? 4 : 0"  :color="scrolled ? 'primary' : 'transparent'" density="compact" v-scroll="(e: any) => scroll = e.target.scrollingElement.scrollTop" app flat>
+				<v-progress-linear class="position-fixed" :active="utilsStore.isLoading" color="white" indeterminate />
 
 				<template #prepend>
 					<v-app-bar-nav-icon class="me-4" :icon="'fa ' + (drawer ? 'fa-times' : 'fa-bars fa-fade')" @click="drawer = !drawer" />
-					<v-btn prepend-icon="fa fa-glasses" :color="scrolled ? 'white' : 'primary'" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" @click="$router.push({ name: 'home' })">BeSpectacled</v-btn>
+					<v-btn prepend-icon="fa fa-glasses" :color="scrolled ? 'white' : 'primary'" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" @click="router.push({ name: 'home' })">BeSpectacled</v-btn>
 
 					<v-dialog v-model="dialog" width="500" height="90%" scrollable>
 						<template #activator="{ props }">
-							<v-btn v-bind="props" prepend-icon="fa fa-search" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'">
+							<v-btn v-bind="props" prepend-icon="fa fa-search" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'">
 								Search
 								<div class="py-1 px-2 ms-2 border rounded text-disabled text-caption">Press /</div>
 							</v-btn>
@@ -141,8 +169,11 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 								<v-card-text>
 									<v-list v-if="search" lines="one" density="compact">
 										<template v-for="{ name, icon, to, key, children } in filteredCategories" :key="name">
-											<div class="text-high-emphasis font-weight-black text-uppercase" @click="$router.push(to)">{{ name }}</div>
-											<v-list-item v-for="child in children" :key="child" :prepend-icon="icon" :title="child[key]" @click="$router.push(to + '/' + child.id); isActive.value = false" />
+											<p><router-link class="text-high-emphasis font-weight-black text-uppercase" :to="to">{{ name }}</router-link></p>
+											<v-list-item v-for="child in children" :key="child" :prepend-icon="icon" @click="router.push(to + '/' + child.id); isActive.value = false">
+												<v-list-item-title v-if="name === 'Schedules'">{{ date.format(new Date(child[key]), 'normalDateWithWeekday') }} - {{ child?.event?.title }}</v-list-item-title>
+												<v-list-item-title v-else>{{ child[key] }}</v-list-item-title>
+											</v-list-item>
 										</template>
 									</v-list>
 
@@ -157,12 +188,12 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 
 					<v-menu v-if="$vuetify.display.smAndDown">
 						<template v-slot:activator="{ props }">
-							<v-btn v-bind="props" append-icon="fa fa-ellipsis-vertical" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" text="More" />
+							<v-btn v-bind="props" append-icon="fa fa-ellipsis-vertical" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" text="More" />
 						</template>
 
 						<v-sheet>
 							<v-tabs v-model="tab" direction="vertical">
-								<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" color="primary" :value="type" @click="$router.push({ name: 'events', query: { type } })">
+								<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" color="primary" :value="type" @click="router.push({ name: 'events', query: { type } })">
 									{{ type.charAt(0).toUpperCase() + type.slice(1) }}
 								</v-tab>
 							</v-tabs>
@@ -170,16 +201,16 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 					</v-menu>
 
 					<v-tabs v-else v-model="tab">
-						<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" :color="scrolled ? undefined : 'primary'" :value="type" @click="$router.push({ name: 'events', query: { type } })">
+						<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" :color="scrolled ? undefined : 'primary'" :value="type" @click="router.push({ name: 'events', query: { type } })">
 							{{ type.charAt(0).toUpperCase() + type.slice(1) }}
 						</v-tab>
 					</v-tabs>
 				</template>
 
 				<template #append>
-					<v-btn v-if="user?.token" prepend-icon="fa fa-id-card" :color="scrolled ? 'white' : 'primary'" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" variant="outlined" @click="$router.push('/profile')">Profile</v-btn>
-					<v-btn v-else prepend-icon="fa fa-right-to-bracket" :color="scrolled ? 'white' : 'primary'" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" @click="$router.push('/login')">Login</v-btn>
-					<v-btn :icon="$theme.global.current.value.dark ? 'fa fa-sun' : 'fa fa-moon'" @click="toggle" />
+					<v-btn v-if="user?.token" prepend-icon="fa fa-id-card" :color="scrolled ? 'white' : 'primary'" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" variant="outlined" @click="router.push('/profile')">Profile</v-btn>
+					<v-btn v-else prepend-icon="fa fa-right-to-bracket" :color="scrolled ? 'white' : 'primary'" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" @click="router.push('/login')">Login</v-btn>
+					<v-btn :icon="theme.global.current.value.dark ? 'fa fa-sun' : 'fa fa-moon'" @click="toggle" />
 				</template>
 			</v-app-bar>
 
@@ -188,7 +219,7 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 					<v-list>
 						<v-list-item prepend-icon="fa fa-user-circle" :title="user?.username" :subtitle="user?.email">
 							<template #append>
-								<v-btn variant="text" icon="fa fa-pen" @click="$router.push('/profile')" />
+								<v-btn variant="text" icon="fa fa-pen" @click="router.push('/profile')" />
 							</template>
 
 							<v-progress-linear v-if="!user?.username" color="primary" rounded indeterminate />
@@ -198,21 +229,21 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 					<v-divider />
 
 					<v-list density="default" nav>
-						<v-list-item prepend-icon="fa fa-id-card" title="Profile" @click="$router.push('/profile')" />
-						<v-list-item v-if="user.roles?.includes('ROLE_ADMIN')" prepend-icon="fa fa-gauge" title="Admin Panel" @click="$router.push('/admin')" />
+						<v-list-item prepend-icon="fa fa-id-card" title="Profile" @click="router.push('/profile')" />
+						<v-list-item v-if="user.roles?.includes('ROLE_ADMIN')" prepend-icon="fa fa-gauge" title="Admin Panel" @click="router.push('/admin')" />
 						<v-list-item prepend-icon="fa fa-sign-out-alt" title="Logout" @click.prevent="logout" />
 					</v-list>
 				</template>
 
 				<v-list v-else>
-					<v-list-item prepend-icon="fa fa-sign-in-alt" title="Login" @click="$router.push('/login')" />
-					<v-list-item prepend-icon="fa fa-user-plus" title="Register" @click="$router.push('/register')" />
+					<v-list-item prepend-icon="fa fa-sign-in-alt" title="Login" @click="router.push('/login')" />
+					<v-list-item prepend-icon="fa fa-user-plus" title="Register" @click="router.push('/register')" />
 				</v-list>
 
 				<v-divider />
 
 				<v-list density="default" nav>
-					<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" :title="name" @click="$router.push(to)" />
+					<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" :title="name" @click="router.push(to)" />
 				</v-list>
 
 				<!-- <template #append>
@@ -223,16 +254,16 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 			</v-navigation-drawer>
 
 			<!-- Message Toast -->
-			<v-snackbar :="$utilsStore.toast" elevation="24" transition="slide-y-transition">
-				{{ $utilsStore.toast.text }}
+			<v-snackbar :="utilsStore.toast" elevation="24" transition="slide-y-transition">
+				{{ utilsStore.toast.text }}
 
 				<template #actions>
-					<v-btn icon="fa fa-times" color="white" @click="$utilsStore.hideToast()" />
+					<v-btn icon="fa fa-times" color="white" @click="utilsStore.hideToast()" />
 				</template>
 			</v-snackbar>
 
 			<v-main style="--v-layout-top: 48px;">
-				<v-banner v-if="user && user?.status === 0" class="align-center" icon="$info" color="info" lines="one" sticky>
+				<v-banner v-if="user && user?.roles.includes('ROLE_UNVERIFIED')" class="align-center" icon="$info" color="info" lines="one" sticky>
 					<v-banner-text>
 						You need to verify your email address before you can continue.
 					</v-banner-text>
@@ -242,12 +273,13 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 					</template>
 				</v-banner>
 
-				<Carousel class="mt-n12" v-if="$router.currentRoute.value.name === 'home'" />
+				<Carousel class="mt-n12" v-if="$route.name === 'home'" />
+				<NotFound class="mt-n12" v-if="$route.name === 'not-found'" />
 
 				<v-container class="mb-7">
 					<router-view v-slot="{ Component }">
 						<keep-alive>
-							<component :is="Component" :key="$route.fullPath"></component>
+							<component :is="Component" :key="$route.fullPath" :scroll="scroll"></component>
 						</keep-alive>
 					</router-view>
 				</v-container>

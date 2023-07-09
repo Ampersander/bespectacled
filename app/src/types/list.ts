@@ -8,11 +8,12 @@ export interface Order {
 
 export interface VuetifyOrder {
 	key: string
-	order: string
+	order?: boolean | 'asc' | 'desc'
 }
 
 export interface ListParams {
 	page: string
 	filters?: Filters
 	order?: Order
+	[field: string]: any
 }

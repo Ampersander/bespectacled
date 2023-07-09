@@ -65,6 +65,20 @@ const resetForm = () => {
 			<v-col cols="12" sm="6" md="6">
 				<!-- TODO use modifiers like here when possible -->
 				<v-text-field
+					v-model.number="item.price"
+					:error="Boolean(violations?.price)"
+					:error-messages="violations?.price"
+					:label="$t('venue.price')"
+					required
+					prepend-icon="fa fa-dollar-sign text-yellow"
+					append-inner-icon="fa fa-trash text-red"
+					@click:append-inner="item.price = 0"
+				/>
+			</v-col>
+
+			<v-col cols="12" sm="6" md="6">
+				<!-- TODO use modifiers like here when possible -->
+				<v-text-field
 					v-model.number="item.seats"
 					:error="Boolean(violations?.seats)"
 					:error-messages="violations?.seats"
@@ -77,16 +91,15 @@ const resetForm = () => {
 			</v-col>
 
 			<v-col cols="12" sm="6" md="6">
-				<!-- TODO use modifiers like here when possible -->
 				<v-text-field
-					v-model.number="item.price"
-					:error="Boolean(violations?.price)"
-					:error-messages="violations?.price"
-					:label="$t('venue.price')"
+					v-model="item.location"
+					:error="Boolean(violations?.location)"
+					:error-messages="violations?.location"
+					:label="$t('venue.location')"
 					required
-					prepend-icon="fa fa-dollar-sign text-yellow"
+					prepend-icon="fa fa-font text-primary"
 					append-inner-icon="fa fa-trash text-red"
-					@click:append-inner="item.price = 0"
+					@click:append-inner="item.location = ''"
 				/>
 			</v-col>
 

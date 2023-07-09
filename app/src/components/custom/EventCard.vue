@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { ref, toRef } from 'vue'
+import { ref } from 'vue'
 
 import type { Event } from '@/types/event'
 
 import StripeCheckout from '@/components/common/StripeCheckout.vue'
 import StripeElementPayment from '@/components/common/StripeElementPayment.vue'
 
-
-const props = defineProps<{ event: Event }>()
 
 // TODO transform to const
 // let show = toRef(props, 'show')
@@ -16,6 +14,7 @@ const emit = defineEmits<{
 	(e: 'cancel'): void
 	(e: 'book'): void
 }>()
+defineProps<{ event: Event }>()
 
 const icons: Record<string, string> = {
 	broadway: 'fa fa-mask',
@@ -23,23 +22,20 @@ const icons: Record<string, string> = {
 	other: 'fa fa-question'
 }
 
-const menus = ref<{ venue: boolean, days: boolean[], times: { [key: string]: boolean } }>({ venue: false, days: [], times: {} })
+const menus = ref<{ venue: boolean, days: boolean[], times: Record<string, boolean> }>({ venue: false, days: [], times: {} })
 
-// const schedule = props.event.schedules[0]
-const days = props.event.schedules.filter(s => Date.now() < new Date(s.date).getTime())
-
-const options: { [key: string]: Intl.DateTimeFormatOptions } = {
+const formats: Record<string, Intl.DateTimeFormatOptions> = {
 	short: { month: 'short', day: 'numeric' },
 	long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
 }
 
-const slides = [
-	new URL('@/assets/maestro.jpeg', import.meta.url).href,
-	new URL('@/assets/carnival.jpeg', import.meta.url).href,
-	new URL('@/assets/concert.jpeg', import.meta.url).href,
-	new URL('@/assets/neon-lights.jpeg', import.meta.url).href,
-	new URL('@/assets/theatre.jpeg', import.meta.url).href
-]
+// const slides = [
+// 	new URL('@/assets/maestro.jpeg', import.meta.url).href,
+// 	new URL('@/assets/carnival.jpeg', import.meta.url).href,
+// 	new URL('@/assets/concert.jpeg', import.meta.url).href,
+// 	new URL('@/assets/neon-lights.jpeg', import.meta.url).href,
+// 	new URL('@/assets/theatre.jpeg', import.meta.url).href
+// ]
 </script>
 
 <template>
@@ -48,7 +44,7 @@ const slides = [
 			<v-progress-linear :active="isActive" color="primary" indeterminate />
 		</template>
 
-		<v-img v-if="typeof event.src === 'string'" :src="event.src" height="250" class="card-bg" cover>
+		<v-img v-if="typeof event.src === 'string'" class="card-bg" :src="event.src" height="250" cover>
 			<v-img :src="event.src" height="250" />
 		</v-img>
 
@@ -61,19 +57,19 @@ const slides = [
 
 			<v-menu v-if="event.venue" v-model="menus.venue" location="top start" origin="top start" transition="scale-transition">
 				<template #activator="{ props }">
-					<v-chip v-bind="props" pill link>
-						<v-avatar start :image="event.venue?.src" icon="fa fa-location-dot" />
-						{{ event.venue?.name }}
-						<v-avatar end :icon="icons[event.type]" />
+					<v-chip v-bind="props" link pill>
+						<v-avatar :image="event.venue.src" icon="fa fa-location-dot" start />
+						{{ event.venue.name }}
+						<v-avatar end :icon="icons[event.venue.type]" />
 					</v-chip>
 				</template>
 
 				<v-card width="max-content">
 					<v-list bg-color="black">
-						<v-list-item :title="event.venue?.name" :subtitle="`Min. $${event.price} per seat`" :prepend-avatar="event.venue?.src">
+						<v-list-item :title="event.venue?.name" :subtitle="`Rentable for $${event.venue.price} per day`" :prepend-avatar="event.venue.src">
 							<template #append>
 								<v-list-item-action>
-									<v-btn icon variant="text" @click="menus.venue = false">
+									<v-btn variant="text" icon @click="menus.venue = false">
 										<v-icon icon="fa fa-times-circle" />
 									</v-btn>
 								</v-list-item-action>
@@ -89,10 +85,9 @@ const slides = [
 				</v-card>
 			</v-menu>
 
-			<v-chip v-else pill link disabled>
-				<v-avatar start icon="fa fa-location-dot" />
+			<v-chip v-else link pill disabled>
+				<v-avatar icon="fa fa-location-dot" start />
 				No venue specified
-				<v-avatar end :icon="icons[event.type]" />
 			</v-chip>
 		</v-card-item>
 
@@ -101,9 +96,9 @@ const slides = [
 				<v-rating :model-value="4.5" color="amber" density="compact" half-increments readonly size="small" />
 				<div class="text-grey ms-4">4.5 (413)</div>
 			</v-row>
-		</v-card-text> -->
+		</v-card-text>
 
-		<!-- <v-divider class="mx-6 mt-3 mb-0" /> -->
+		<v-divider class="mx-6 mt-3 mb-0" /> -->
 
 		<!-- <v-row justify="space-around">
 			<v-col class="d-flex flex-column align-center">
@@ -117,14 +112,14 @@ const slides = [
 			</v-col>
 		</v-row> -->
 
-		<!-- <v-divider class="mx-6 my-2" /> -->
+		<v-divider class="mx-6 my-2" />
 
 		<v-card-item>
 			<div class="text-overline">Happening on</div>
 
-			<v-chip-group v-if="days.length > 0">
+			<v-chip-group v-if="event.schedules.length > 0" model-value="0" mandatory>
 				<v-menu
-					v-for="(day, i) in days"
+					v-for="(day, i) in event.schedules"
 					:key="i"
 					v-model="menus.days[i]"
 					location="top start"
@@ -133,12 +128,12 @@ const slides = [
 					:disabled="Date.now() > new Date(day.date).getTime()"
 				>
 					<template #activator="{ props }">
-						<v-chip v-bind="props" pill link :text="new Date(day.date).toLocaleDateString(undefined, options.short)" :disabled="Date.now() > new Date(day.date).getTime()" />
+						<v-chip v-bind="props" :disabled="Date.now() > new Date(day.date).getTime()" :text="new Date(day.date).toLocaleDateString($vuetify.locale.current, formats.short)" link pill />
 					</template>
 
 					<v-card width="max-content">
 						<v-list bg-color="black">
-							<v-list-item :title="(new Date(day.date)).toLocaleDateString(undefined, options.long)" :subtitle="day.times.length + (day.times.length === 1 ? ` time` : ' times') + ' available'" prepend-icon="fa fa-calendar">
+							<v-list-item :title="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, formats.long)" :subtitle="day.times.length + (day.times.length === 1 ? ` time` : ' times') + ' available'" prepend-icon="fa fa-calendar">
 								<template #append>
 									<v-list-item-action>
 										<v-btn icon="fa fa-times-circle" variant="text" @click="menus.days[i] = false" />
@@ -164,7 +159,7 @@ const slides = [
 
 									<v-card width="max-content">
 										<v-list bg-color="black">
-											<v-list-item :title="time" :subtitle="(new Date(day.date)).toLocaleDateString(undefined, options.long)" prepend-icon="fa fa-clock">
+											<v-list-item :title="time" :subtitle="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, formats.long)" prepend-icon="fa fa-clock">
 												<template #append>
 													<v-list-item-action>
 														<v-btn icon="fa fa-times-circle" variant="text" @click="menus.times[day.date + 'T' + time] = false" />
@@ -193,7 +188,7 @@ const slides = [
 			</v-chip-group>
 
 			<v-chip-group v-else column>
-				<v-chip pill link text="No days available yet" disabled />
+				<v-chip text="No days available yet" link pill disabled />
 			</v-chip-group>
 		</v-card-item>
 
@@ -204,14 +199,17 @@ const slides = [
 		<v-divider class="my-1" />
 
 		<v-card-actions>
-			<span class="d-flex align-center">
-				<v-icon icon="fa fa-dollar" color="green" />
-				<b class="text-h6">{{ event.price }}</b>&nbsp;
-				<span class="text-overline">per seat</span>
-			</span>
-			<!-- <v-btn color="secondary" variant="outlined" v-text="'See Event'" @click="() => $router.push({ name: 'event', params: { id: event.id } })" /> -->
+			<v-icon icon="fa fa-dollar" color="yellow" />
+
+			<div class="text-h6">
+				<b>{{ event.price }}</b>
+				<small class="text-overline"> per seat</small>
+			</div>
+
 			<v-spacer />
-			<!--<v-btn :disabled="days.length < 1" :color="days.length < 1 ? 'gray' : 'primary'" variant="elevated" v-text="'Book Now'" @click="() => $router.push({ name: 'ticketing', query: { event: event.id } })" />-->
+
+			<!-- <v-btn :disabled="days.length < 1" :color="days.length < 1 ? 'gray' : 'secondary'" variant="outlined" v-text="'Book Now'" @click="() => $router.push({ name: 'ticketing', query: { event: event.id } })" /> -->
+			<v-btn color="primary" variant="elevated" v-text="'See More'" @click="() => $router.push({ name: 'event', params: { id: event.id } })" />
 		</v-card-actions>
 	</v-card>
 </template>

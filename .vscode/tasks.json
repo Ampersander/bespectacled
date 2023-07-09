@@ -2,40 +2,98 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Start Project",
+			"dependsOn": [
+				"Start Client",
+				"Start Server",
+				"Preview"
+			],
+			"dependsOrder": "parallel",
+			"detail": "Start Client & Server",
+			"group": { "kind": "test", "isDefault": true }
+		},
+		{
 			"type": "npm",
 			"script": "dev",
 			"path": "app",
 			"problemMatcher": [],
 			"label": "Start Client",
 			"detail": "vite",
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			}
+			"group": "test"
 		},
 		{
 			"type": "shell",
 			"problemMatcher": [],
 			"label": "Start Server",
 			"detail": "cd api && composer serve",
+			"hide": true,
+			"options": { "cwd": "${workspaceFolder}/api" },
+			"presentation": { "panel": "dedicated", },
 			"command": "composer",
 			"args": ["serve"],
-			"icon": {
-				"id": "server",
-				"color": "terminal.ansiCyan"
-			}
+			"icon": { "id": "server", "color": "terminal.ansiCyan" },
+			"group": "test"
 		},
 		{
 			"type": "shell",
 			"problemMatcher": [],
 			"label": "Stop Server",
 			"detail": "composer stop",
+			"options": { "cwd": "${workspaceFolder}/api" },
 			"command": "composer",
 			"args": ["stop"],
-			"icon": {
-				"id": "stop",
-				"color": "terminal.ansiCyan"
-			}
+			"icon": { "id": "stop", "color": "terminal.ansiCyan" }
+		},
+		{
+			"type": "shell",
+			"problemMatcher": [],
+			"label": "Refresh Database",
+			"detail": "composer refresh",
+			"options": { "cwd": "${workspaceFolder}/api" },
+			"command": "composer",
+			"args": ["refresh"],
+			"icon": { "id": "refresh", "color": "terminal.ansiCyan" }
+		},
+		{
+			"type": "process",
+			"problemMatcher": [],
+			"label": "Preview",
+			"detail": "Open Browser",
+			"command": "${input:preview}",
+			"icon": { "id": "globe", "color": "terminal.ansiCyan" }
+		},
+		{
+			"type": "shell",
+			"problemMatcher": [],
+			"label": "NPM Install",
+			"detail": "npm install ${input:cmd}",
+			"options": { "cwd": "${workspaceFolder}/app" },
+			"command": "npm",
+			"args": ["install", "${input:cmd}"],
+			"icon": { "id": "terminal", "color": "terminal.ansiYellow" }
+		},
+		{
+			"type": "shell",
+			"problemMatcher": [],
+			"label": "Composer Install",
+			"detail": "composer install ${input:cmd}",
+			"options": { "cwd": "${workspaceFolder}/app" },
+			"command": "composer",
+			"args": ["install", "${input:cmd}"],
+			"icon": { "id": "terminal", "color": "terminal.ansiYellow" }
+		}
+	],
+	"inputs": [
+		{
+			"id": "preview",
+			"type": "command",
+			"command": "simpleBrowser.show",
+			"args": ["http://localhost:3000"]
+		},
+		{
+			"id": "cmd",
+			"type": "promptString",
+			"description": "Enter command"
 		}
 	]
 }

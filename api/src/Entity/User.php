@@ -7,10 +7,11 @@ use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
-use App\Controller\UserController;
 use App\Repository\UserRepository;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use App\Controller\ArtistsController;
+use App\Controller\ProfileController;
 use ApiPlatform\Metadata\GetCollection;
 use App\Controller\ResetPasswordAction;
 use Doctrine\Common\Collections\Collection;
@@ -35,8 +36,13 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             normalizationContext: ['groups' => ['user:read']]
         ),
         new GetCollection(
-            uriTemplate: '/users/me',
-            controller: UserController::class,
+            uriTemplate: '/profile',
+            controller: ProfileController::class,
+        ),
+        new GetCollection(
+            uriTemplate: '/artists',
+            controller: ArtistsController::class,
+            security: "is_granted('PUBLIC_ACCESS')"
         ),
         new Get(
             // uriTemplate: '/users/{id}',
@@ -106,6 +112,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     #[Groups('user:read')]
+    // Postgres: #[ORM\Column(type: 'json', options: ['jsonb' => true])]
     private array $roles = [];
 
     #[ORM\Column]

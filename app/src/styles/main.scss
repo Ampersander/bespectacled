@@ -27,6 +27,10 @@ $font-family-title: 'Titillium Web', sans-serif;
 	&.sticky-full {
 		height: calc(100vh - 48px * 2 - 16px) !important;
 	}
+
+	&.sticky-aside {
+		height: calc(100vh - 48px * 2 + 16px) !important;
+	}
 }
 
 html,
@@ -48,12 +52,12 @@ html,
 	border: none !important;
 }
 
-.v-carousel .v-sheet .v-btn {
+.v-parallax .v-sheet .v-btn {
 	position: absolute;
 	bottom: 48px;
 }
 
-.v-carousel .v-img__img {
+.v-parallax .v-img__img {
 	object-fit: cover;
 }
 
@@ -69,14 +73,60 @@ html,
 	margin-bottom: 0;
 }
 
+.v-table .v-img__img {
+	object-position: left;
+}
+
 .blend {
 	padding-inline: 8px;
 	border-radius: 5px;
 	background: #FFF;
 	color: black !important;
 	mix-blend-mode: lighten;
+
+	&.blend-dark {
+		color: white !important;
+		mix-blend-mode: hard-light;
+	}
 }
 
-.v-table .v-img__img {
-	object-position: left;
+.backdrop {
+	background-color: #7750f877 !important;
+	backdrop-filter: blur(5px);
+	-webkit-backdrop-filter: blur(5px);
+}
+
+$breakpoints: (
+	'': 2,
+	'-xs': 5,
+	'-sm': 5,
+	'-md': 10,
+	'-lg': 15
+);
+
+// for each breakpoint
+@each $breakpoint, $value in $breakpoints {
+	// create a class with the breakpoint name
+	// and the value as the number of lines to clamp
+	.clamp#{$breakpoint} {
+		overflow: hidden;
+		display: -webkit-box;
+		-webkit-line-clamp: $value;
+		-webkit-box-orient: vertical;
+
+		&-fade {
+			position: relative;
+		}
+
+		&-fade::after {
+			content: "";
+			text-align: right;
+			position: absolute;
+			bottom: 0;
+			right: 0;
+			width: 70%;
+			height: 1.2em;
+			background: linear-gradient(to right, rgba(255, 255, 255, 0), rgb(var(--v-theme-surface-darken-1)) 50%);
+		}
+	}
 }

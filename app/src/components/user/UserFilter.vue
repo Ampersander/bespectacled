@@ -29,13 +29,13 @@
           type="string"
         />
       </v-col>
-      <v-col cols="12" sm="6" md="6">
+      <!-- <v-col cols="12" sm="6" md="6">
         <v-text-field
           v-model="item.password"
           :label="$t('user.password')"
           type="string"
         />
-      </v-col>
+      </v-col> -->
       <v-col cols="12" sm="6" md="6">
         <v-text-field
           v-model="item.enabled"
@@ -85,13 +85,13 @@
           type="dateTime"
         />
       </v-col>
-      <v-col cols="12" sm="6" md="6">
+      <!-- <v-col cols="12" sm="6" md="6">
         <v-text-field
           v-model="item.deletedAt"
           :label="$t('user.deletedAt')"
           type="dateTime"
         />
-      </v-col>
+      </v-col> -->
     </v-row>
   </v-container>
 </template>

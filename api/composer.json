@@ -14,6 +14,7 @@
 		"doctrine/doctrine-migrations-bundle": "^3.2",
 		"doctrine/orm": "^2.12",
 		"fakerphp/faker": "^1.20",
+		"gedmo/doctrine-extensions": "^3.11",
 		"gesdinet/jwt-refresh-token-bundle": "^1.1",
 		"guzzlehttp/guzzle": "^7.4",
 		"lexik/jwt-authentication-bundle": "^2.16",
@@ -102,7 +103,7 @@
 			"php bin/phpunit"
 		],
 		"serve": [
-			"symfony serve --port 80 --allow-http -d"
+			"symfony serve --port 80 --allow-http"
 		],
 		"stop": [
 			"symfony server:stop"
@@ -117,7 +118,7 @@
 			"php bin/console d:s:u -f --complete"
 		],
 		"fixtures": [
-			"php bin/console hautelook:fixtures:load -n"
+			"php bin/console hautelook:fixtures:load --purge-with-truncate -n"
 		],
 		"refresh": [
 			"composer drop && composer create && composer tables && composer fixtures"

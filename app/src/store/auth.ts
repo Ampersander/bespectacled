@@ -2,14 +2,14 @@ import axios from 'axios'
 import { defineStore } from 'pinia'
 
 import router from '@/router'
-import headers from './headers'
-import { SubmissionErrors } from '@/types/error'
-import { SubmissionError } from '@/utils/error'
-import { User } from '@/types/user'
 import api from '@/utils/api'
+import headers from './headers'
+import { User } from '@/types/user'
+import { SubmissionError } from '@/utils/error'
+import { SubmissionErrors } from '@/types/error'
 
 interface State {
-	user?: any
+	user?: User
 	isLoading: boolean
 	error?: string
 	violations?: SubmissionErrors
@@ -86,20 +86,74 @@ export const useAuthStore = defineStore('auth', {
 				if (error instanceof Error) this.setError(error.message)
 			}
 		},
+		async editProfile(payload: any) {
+			this.setError(undefined)
+			this.setViolations(undefined)
+			this.toggleLoading()
+
+			if (!this.user) {
+				this.setError('No user found. Please reload')
+				return
+			}
+
+			try {
+				const response = await api('/api/users/' + this.user.id, {
+					method: 'PUT',
+					headers: new Headers({
+						'Content-Type': 'application/ld+json',
+						'Authorization': `Bearer ${this.user.token}`,
+					}),
+					body: JSON.stringify(payload)
+				})
+				const data: User = await response.json()
+
+				this.toggleLoading()
+				this.setUser(data)
+			} catch (error) {
+				this.toggleLoading()
+
+				if (error instanceof SubmissionError) {
+					this.setViolations(error.errors)
+					this.setError(error.errors._error)
+					return
+				}
+
+				if (error instanceof Error) this.setError(error.message)
+			}
+		},
+		async forgotPassword(payload: Pick<User, 'email'>) {
+			this.setError(undefined)
+			this.setViolations(undefined)
+			this.toggleLoading()
+
+			try {
+				const response = await api('forgot-password', {
+					method: 'POST',
+					body: JSON.stringify(payload)
+				})
+				const data = await response.json()
+
+				return data
+			} catch (error) {
+				if (error instanceof SubmissionError) {
+					this.setViolations(error.errors)
+					this.setError(error.errors._error)
+				} else if (error instanceof Error) this.setError(error.message)
+
+				throw this.error
+			} finally {
+				this.toggleLoading()
+			}
+		},
 		logout() {
-			this.user = null
+			this.user = undefined
 			localStorage.removeItem('user')
 			router.push('/login')
-			// router.go(0)
 		},
 		profile(data = null) {
-			return axios.get(`${baseUrl}/users/me`, { headers: headers(data) })
+			return axios.get(`${baseUrl}/profile`, { headers: headers(data) })
 		},
-		async forgotPassword(user: any) {
-			return axios.post(`${baseUrl}/forgot-password`, user)
-				.then(response => { return response.data })
-		},
-		setUser(user: User) {
+		setUser(user: User | undefined) {
 			this.user = user
 			localStorage.setItem('user', JSON.stringify(user))
 		},

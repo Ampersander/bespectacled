@@ -1,105 +1,103 @@
-<template>
-    <div class="forget-password">
-        <h1>Forget Password</h1>
-        <Form @submit="forgotPassword" :validation-schema="schema">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <Field name="email" type="email" class="form-control" />
-                <ErrorMessage name="email" class="error-feedback text-danger" />
-                <span class="text-danger">{{ errors['email'] }}</span>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-primary btn-block" :disabled="loading">
-                    <span v-show="loading" class="spinner-border spinner-border-sm"></span>
-                    <span>Forget Password</span>
-                </button>
-            </div>
-            <div class="form-group">
-                <div v-if="message" class="alert alert-danger" role="alert">
-                    {{ message }}
-                </div>
-            </div>
-        </Form>
-    </div>
-</template>
-<script>
-import { Form, Field, ErrorMessage } from "vee-validate";
-import * as yup from "yup";
-export default {
-    name: "ForgotPassword",
-    components: {
-        Form,
-        Field,
-        ErrorMessage,
-    },
-    data() {
-        var errors = { "email": "", "password": "" };
-        const schema = yup.object().shape({
-            email: yup
-                .string()
-                .required("Email is required!")
-                .email("Email is invalid!")
-                .max(50, "Must be maximum 50 characters!"),
-        });
-        return {
-            loading: false,
-            message: "",
-            schema,
-            errors,
-        };
-    },
-    methods: {
-        forgotPassword(email) {
-            console.log(email);
-            this.loading = true;
-            this.$store.dispatch("auth/forget-password", email).then(
-                () => {
-                    this.$router.push("/login");
-                },
-                (error) => {
-                    this.loading = false;
-                    this.message =
-                        (error.response &&
-                            error.response.data &&
-                            error.response.data.message) ||
-                        error.message ||
-                        error.toString();
+<script setup lang="ts">
+import { onBeforeMount, reactive, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
+import { useVuelidate } from '@vuelidate/core'
+import { email, maxLength, required } from '@vuelidate/validators'
 
-                    if (error.response.data.error) {
-                        this.errors['email'] = error.response.data.error
-                    } else if (error.response.data.violations) {
-                        error.response.data.violations.forEach(element =>
-                            this.errors[element.propertyPath] = element.message
-                        );
-                    }
-                }
-            );
-        },
-        handleLogin(user) {
-            this.loading = true;
-            this.$vg.dispatch("auth/login", user).then(
-                () => {
-                    this.$router.push("/profile");
-                },
-                (error) => {
-                    this.loading = false;
-                    this.message =
-                        (error.response &&
-                            error.response.data &&
-                            error.response.data.message) ||
-                        error.message ||
-                        error.toString();
+import { User } from '@/types/user'
+import { useAuthStore, useUtilsStore } from '@/store'
 
-                    if (error.response.data.error) {
-                        this.errors['email'] = error.response.data.error
-                    } else if (error.response.data.violations) {
-                        error.response.data.violations.forEach(element =>
-                            this.errors[element.propertyPath] = element.message
-                        );
-                    }
-                }
-            );
-        }
-    },
-};
+const $router = useRouter()
+const $store = useAuthStore()
+const $utilsStore = useUtilsStore()
+
+const { user, error, violations } = storeToRefs($store)
+
+const parallax = new URL('@/assets/carnival.jpeg', import.meta.url).href
+
+const valid = ref(true)
+const inputs = reactive({ email: '', password: 'password' }) // Throws an error if we remove the password key
+const form = ref<null | typeof import('vuetify/components')['VForm']>(null)
+
+const rules = {
+	email: { required, email, maxLength: maxLength(50) }
+}
+
+const v$ = useVuelidate(rules, inputs)
+
+const handleForgotPassword = async (payload: Pick<User, 'email'>) => {
+	if (!valid.value) return
+
+	$utilsStore.setLoading(true)
+
+	try {
+		const data = await $store.forgotPassword(payload)
+		if (!data?.message) throw new Error('Something went wrong')
+		$utilsStore.showToast(data?.message)
+		$router.push({ name: 'login' })
+	} catch (err: any) {
+		$utilsStore.showToast(err, 'danger')
+	} finally {
+		$utilsStore.setLoading(false)
+	}
+}
 </script>
+
+<template>
+	<v-parallax :src="parallax">
+		<div class="d-flex flex-column fill-height justify-center align-center">
+			<div class="text-white-50 text-h2 font-weight-thin mb-4">BeSpectacled</div>
+			<div class="text-h4 text-primary">Recover your password</div>
+		</div>
+	</v-parallax>
+
+	<v-card :disabled="$utilsStore.isLoading || !inputs">
+		<v-form ref="form" v-model="valid" @submit.prevent="handleForgotPassword(inputs)">
+			<v-card-text>
+				<v-row>
+					<v-col cols="12">
+						<v-text-field
+							autofocus
+							v-model="inputs.email"
+							:error="Boolean(violations?.email)"
+							:error-messages="violations?.email || v$.email?.$errors.map((e: any) => e.$message)"
+							:counter="50"
+							label="Email*"
+							type="email"
+							required
+							@input="v$.email.$touch"
+							@blur="v$.email.$touch"
+						/>
+					</v-col>
+				</v-row>
+			</v-card-text>
+
+			<v-card-actions>
+				<v-btn color="primary" variant="tonal" @click="$router.push('/login')">Already verified?</v-btn>
+
+				<v-spacer />
+
+				<v-btn :disabled="!v$.$anyDirty" color="primary" @click="form?.reset()" type="reset">Reset</v-btn>
+				<v-btn :loading="$utilsStore.isLoading" color="primary" variant="elevated" type="submit" @click="v$.$validate">Send Email</v-btn>
+			</v-card-actions>
+		</v-form>
+	</v-card>
+</template>
+
+<style scoped>
+.v-parallax {
+	height: calc(50vh - (48px + 16px * 2)) !important;
+	margin-bottom: 16px;
+}
+
+.card-container.card {
+	padding: 40px 40px;
+}
+
+.card {
+	padding: 20px 25px 30px;
+	margin: 0 auto 25px;
+	margin-top: 50px;
+}
+</style>

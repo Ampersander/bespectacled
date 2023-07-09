@@ -27,13 +27,14 @@ const routes = [
 	{
 		path: '/', component: () => import('@/layouts/Default.vue'), children: [
 			{ path: '', name: 'home', component: () => import('@/views/default/HomePage.vue') },
+
 			{ path: 'artists', name: 'artists', component: () => import('@/views/default/ArtistsPage.vue') },
-			{ path: 'artists/:id', name: 'artist', component: () => import('@/views/default/ArtistPage.vue') },
-			{ path: 'events', name: 'events', component: () => import('@/views/default/EventsPage.vue'), meta: { breadcrumb: ['Events'] } },
-			{ path: 'events/:id', name: 'event', component: () => import('@/views/default/BlankPage.vue'), meta: { breadcrumb: ['Events', 'Show Event'] } },
+			{ path: 'artists/:id', name: 'artist', component: () => import('@/views/default/ArtistPage.vue'), meta: { breadcrumb: [{ title: 'Artists', to: { name: 'artists' } }] } },
+			{ path: 'events', name: 'events', component: () => import('@/views/default/EventsPage.vue') },
+			{ path: 'events/:id', name: 'event', component: () => import('@/views/event/ViewShow.vue'), meta: { breadcrumb: [{ title: 'Events', to: { name: 'events' } }] } },
 			{ path: 'venues', name: 'venues', component: () => import('@/views/default/VenuesPage.vue') },
-			{ path: 'venues/:id', name: 'venue', component: () => import('@/views/default/BlankPage.vue') },
-			{ path: 'calendar', name: 'calendar', component: () => import('@/views/default/CalendarPage.vue') },
+			{ path: 'venues/:id', name: 'venue', component: () => import('@/views/venue/ViewShow.vue'), meta: { breadcrumb: [{ title: 'Venues', to: { name: 'venues' } }] } },
+			{ path: 'calendar', name: 'calendar', component: () => import('@/views/default/CalendarPage.vue'), meta: { breadcrumb: [{ title: 'Calendar', to: { name: 'calendar' } }] } },
 			{ path: 'ticketing', name: 'ticketing', component: () => import('@/views/default/TicketingPage.vue') },
 
 			{ path: 'orders', name: 'orders', component: () => import('@/views/default/BlankPage.vue'), meta: { requires: 'auth' } },
@@ -44,7 +45,7 @@ const routes = [
 			{ path: 'register', name: 'register', component: () => import('@/views/default/RegisterPage.vue'), meta: { requires: 'guest' } },
 			{ path: 'forgot-password', name: 'forgot-password', component: () => import('@/views/default/ForgotPasswordPage.vue'), meta: { requires: 'guest' } },
 
-			{ path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/default/NotFoundPage.vue') }
+			{ path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/default/HomePage.vue') }
 		]
 	}
 ]

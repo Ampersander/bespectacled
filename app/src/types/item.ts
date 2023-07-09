@@ -1,5 +1,5 @@
 export interface Item {
-	id?: number
+	id: number
 	'@id'?: string
 	'@type'?: string
 }

@@ -300,11 +300,11 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 										<td>
 											<template v-if="router.hasRoute('ScheduleShow')">
 												<router-link :to="{ name: 'ScheduleShow', params: { id: day.id } }">
-													{{ date.format(day.date, 'normalDateWithWeekday') }}
+													{{ date.format(new Date(day.date), 'normalDateWithWeekday') }}
 												</router-link>
 											</template>
 
-											<p v-bind="props" v-else>{{ date.format(day.date, 'normalDateWithWeekday') }}</p>
+											<p v-bind="props" v-else>{{ date.format(new Date(day.date), 'normalDateWithWeekday') }}</p>
 										</td>
 									</tr>
 
