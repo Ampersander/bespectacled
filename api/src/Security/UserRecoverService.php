@@ -13,39 +13,30 @@ class UserRecoverService
 {
 
     public function __construct(
-        private UserRepository $userRepository,
-        private EntityManagerInterface $entityManager,
+        private Mailer $mailer,
         private LoggerInterface $logger,
         private TokenGenerator $tokenGenerator,
-        private Mailer $mailer
-    )
-    {
-    }
+        private UserRepository $userRepository,
+        private EntityManagerInterface $entityManager
+    ) {}
 
     public function recoverPassword(string $email)
     {
-        $this->logger->debug('Fetching user Email');
+        $this->logger->debug('Fetching user email');
+        $user = $this->userRepository->findOneBy(compact('email'));
 
-        $user = $this->userRepository->findOneBy(
-            ['email' => $email]
-        );
-
-        // User was NOT found Email
+        // If user was not found
         if (!$user) {
             $this->logger->debug('User by email not found');
             throw new \Exception('User by email not found');
         }
 
         // Create confirmation token
-        $user->setConfirmationToken(
-            $this->tokenGenerator->getRandomSecureToken()
-        );
+        $user->setConfirmationToken($this->tokenGenerator->getRandomSecureToken());
         $this->entityManager->flush();
-        
-        // Send e-mail here...
-        $this->mailer->sendRecoverPasswordEmail($user);
- 
 
+        // Send recovery mail
+        $this->mailer->sendRecoverPasswordEmail($user);
         $this->logger->debug('Password Recovery Email Sent');
     }
 }

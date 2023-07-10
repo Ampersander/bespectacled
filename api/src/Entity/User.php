@@ -57,8 +57,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             denormalizationContext: ['groups' => ['user:register']]
         ),
         new Put(),
-        new Delete(),
-        // "put-password" => [
+        // "reset-password" => [
         //     "method" => "PUT",
         //     "path" => "/users/{id}/reset-password",
         //     "controller" => ResetPasswordAction::class,
@@ -66,11 +65,13 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
         //     "access_control" => "is_granted('IS_AUTHENTICATED_FULLY') and object == user"
         // ]
         // new Put(
+        //     name: 'reset-password',
         //     uriTemplate: '/users/{id}/reset-password',
         //     controller: ResetPasswordAction::class,
         //     denormalizationContext: ['groups' => ['user:reset:password']],
         //     security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user"
-        // )
+        // ),
+        new Delete()
     ]
 )]
 #[ApiFilter(BooleanFilter::class)]

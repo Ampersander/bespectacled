@@ -51,6 +51,7 @@ class SecurityController extends AbstractController
     #[Route('/forgot-password/{token}', name: 'forgot_password_token')]
     public function recoverPasswordToken(string $token, UserTokenPassword $userTokenPassword) {
         $userTokenPassword->setTokenAsPassword($token);
+        // TODO redirect to frontend not backend
         return $this->redirect('/login');
     }
 }
