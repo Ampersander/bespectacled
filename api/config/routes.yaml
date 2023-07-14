@@ -4,3 +4,11 @@ authentication_token:
 
 gesdinet_jwt_refresh_token:
     path: /api/token/refresh
+
+payment_generate_intent:
+    path: /api/generate-intent
+    methods: ['POST']
+
+payment_check:
+    path: /api/check-payment
+    methods: ['POST']

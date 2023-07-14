@@ -1,5 +1,5 @@
 parameters:
-  hash: '$2y$13$tGIaqkEM.iVqquRMK43qyO4UN5hNvjIbIVEFOl2hGDHVcQgvMN/9u'
+  hash: '$2y$13$7bkYkOPNhCqyo/rJ2cdp4uQa/4No.RWsHn9pKDXQEJ6EjNCEfymTW'
   artists:
     - { username: 'Billy Joel' }
     - { username: 'Taylor Swift' }

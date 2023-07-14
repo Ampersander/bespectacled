@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Your Ticket for {{ event.getTitle() }}!</title>
+</head>
+<body>
+    <h1>Your Ticket for {{ event.getTitle() }}!</h1>
+    <p>Hello {{ user.getFullName() }},</p>
+    <p>Thank you for purchasing a ticket for the event "{{ event.getTitle() }}".</p>
+    <p>Here are the details of your ticket:</p>
+    <ul>
+        <li>Event: {{ event.getTitle() }}</li>
+        <li>Ticket ID: {{ ticket.getId() }}</li>
+        <li>Date: {{ ticket.getDate()|date('F d, Y') }}</li>
+        <li>Time: {{ ticket.getTime() }}</li>
+        <li>Location: {{ event.getVenue().getName() }}</li>
+        <li>Price: {{ ticket.getPrice()|number_format(2, '.', ',') }} USD</li>
+    </ul>
+    <p>Please bring this ticket with you to the event.</p>
+    <p>Enjoy the event!</p>
+</body>
+</html>
