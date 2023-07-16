@@ -1,12 +1,19 @@
 <template>
-  <StripeElements v-if="stripeLoaded" v-slot="{ elements, instance }" ref="elms" :stripe-key="stripeKey"
-    :instance-options="instanceOptions" :elements-options="elementsOptions">
-    <StripeElement type='payment' ref="card" :elements="elements" :options="cardOptions" />
-  </StripeElements>
-  <v-list-item link prepend-icon="fa fa-ticket"  @click="pay" >
+  <template v-if="isConnected">
+    <StripeElements v-if="stripeLoaded" v-slot="{ elements, instance }" ref="elms" :stripe-key="stripeKey"
+      :instance-options="instanceOptions" :elements-options="elementsOptions">
+      <StripeElement type='payment' ref="card" :elements="elements" :options="cardOptions" />
+    </StripeElements>
+  </template>
+  <v-list-item link prepend-icon="fa fa-ticket" @click="pay" :disabled="!isConnected">
     <v-list-item-title>Buy Ticket {{ price }}
-      <i class="fa fa-dollar v-icon notranslate v-theme--dark v-icon--size-default text-yellow" aria-hidden="true"></i></v-list-item-title>
+      <i class="fa fa-dollar v-icon notranslate v-theme--dark v-icon--size-default text-yellow"
+        aria-hidden="true"></i></v-list-item-title>
   </v-list-item>
+  <template v-if="!isConnected">
+    You need to be connected to buy a ticket
+  </template>
+
 </template>
 
 <script lang="ts">
@@ -15,11 +22,13 @@ import { loadStripe } from '@stripe/stripe-js'
 import { defineComponent, ref, onBeforeMount } from 'vue'
 import PaymentService from '@/services/payment.service';
 import { STRIPE_PK } from "../../utils/config";
+import { storeToRefs } from 'pinia'
+import { useAuthStore, useUtilsStore } from '@/store'
+import { computed } from 'vue';
 
 export default defineComponent({
   name: 'StripeElementPayment',
   props: {
-    // clientSecret: String,
     eventId: Number,
     date: String,
     time: String,
@@ -32,8 +41,12 @@ export default defineComponent({
   },
 
   setup(props) {
-    console.log(props);
+    const store = useAuthStore()
+    const { user } = storeToRefs(store)
 
+    const isConnected = computed(() =>
+      user?.value ? true : false
+    )
     const stripeKey = ref(STRIPE_PK) // Votre clé d'API Stripe de test
     const instanceOptions = ref({
       // Options d'instance Stripe (le cas échéant)
@@ -52,6 +65,7 @@ export default defineComponent({
     const time = ref(props.time);
     const price = ref(props.price);
     const clientSecret = ref('');
+    const utilsStore = useUtilsStore()
 
     onBeforeMount(() => {
 
@@ -86,6 +100,11 @@ export default defineComponent({
           }
         }).then((res: any) => {
           console.log(res);
+          if (res.error) {
+            utilsStore.showToast(res.error.message, 'danger')
+          } else {
+            utilsStore.showToast('Payment successful!')
+          }
         });
 
     }
@@ -93,6 +112,7 @@ export default defineComponent({
     return {
       stripeKey,
       stripeLoaded,
+      isConnected,
       instanceOptions,
       elementsOptions,
       cardOptions,

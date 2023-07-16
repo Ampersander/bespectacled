@@ -28,14 +28,11 @@ class EventEventListener
         }
 
         $event = $this->eventRepository->find($entity->getId());
-        var_dump($event);
 
         //nb of place in Venue seats
         $nbPlace = $event->getVenue()->getSeats();
-        var_dump($nbPlace);
 
         $schedules = $event->getSchedules();
-        var_dump($schedules);
 
         $entityManager = $args->getObjectManager();
         //create tickets for each schedule date an times
@@ -44,15 +41,13 @@ class EventEventListener
             $date = $schedule->getDate();
             $times = $schedule->getTimes();
             foreach ($times as $time) {
-                $ticket = new Ticket();
-                $ticket->setEvent($event);
-                $ticket->setPrice($event->getPrice());
-                $ticket->setReference(uniqid());
-                $ticket->setStatus(-1);
-                $ticket->setDate($date);
-                $ticket->setTime($time);
                 for ($i = 0; $i < $nbPlace; $i++) {
-                    $ticket->setReference(uniqid());
+                    $ticket = new Ticket();
+                    $ticket->setEvent($event);
+                    $ticket->setStatus(-1);
+                    $ticket->setDay($date);
+                    $ticket->setHour($time);
+                    $ticket->setReference(uniqid('', true));
                     $entityManager->persist($ticket);
                 }
             }
