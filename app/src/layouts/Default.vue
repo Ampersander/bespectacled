@@ -149,8 +149,8 @@ watchEffect(() => {
 							<v-btn :="props" prepend-icon="fa fa-search" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'">
 								Search
 								<div class="py-1 px-2 ms-2 border rounded text-disabled text-caption">Press /</div>
-							</v-btn>					
-						</template>		
+							</v-btn>
+						</template>
 
 						<template #="{ isActive }">
 							<v-card>
@@ -213,7 +213,6 @@ watchEffect(() => {
 							{{ name }}
 						</v-tab>
 					</v-tabs>
-					
 				</template>
 
 				<template #append>
