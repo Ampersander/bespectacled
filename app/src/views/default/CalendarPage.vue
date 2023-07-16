@@ -11,6 +11,7 @@ import { Schedule } from '@/types/schedule'
 import Toolbar from '@/components/common/Toolbar.vue'
 import { useBreadcrumb } from '@/composables/breadcrumb'
 import { useEventListStore, useScheduleListStore } from '@/store'
+import StripeElementPayment from '@/components/common/StripeElementPayment.vue';
 
 defineProps<{ scroll: number }>()
 
@@ -282,7 +283,8 @@ watch([events, schedule], () => {
 													</v-list>
 
 													<v-list>
-														<v-list-item link prepend-icon="fa fa-ticket" title="Buy Tickets" @click="() => router.push({ name: 'ticketing', query: { event: attr.customData.event.id, time } })" />
+														<StripeElementPayment :eventId="attr.customData.event['id']" :date="day.date" :time="time" :price="attr.customData.event['price']" />
+														
 													</v-list>
 												</v-card>
 											</v-menu>
@@ -292,7 +294,7 @@ watch([events, schedule], () => {
 									<v-card-actions>
 										<v-btn color="secondary" @click="() => router.push({ name: 'event', params: { id: attr.customData.event.id } })">View Event Details</v-btn>
 										<v-spacer></v-spacer>
-										<v-btn color="primary" @click="() => router.push({ name: 'ticketing', query: { event: attr.customData.event.id } })">Buy Tickets</v-btn>
+										
 									</v-card-actions>
 								</v-card>
 							</v-window-item>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, onBeforeMount } from 'vue'
 import PaymentService from '@/services/payment.service';
+import { useUtilsStore } from '@/store'
 
 const categories = ref([
 	{ name: 'User', icon: 'fa fa-user-tie', to: '/users/', children: [] },
@@ -12,12 +13,22 @@ const categories = ref([
 const parallax = new URL('@/assets/stadium.jpeg', import.meta.url).href
 
 onBeforeMount(() => {
+	const utilsStore = useUtilsStore()
 	//if the url possess ?success, then the payment was successful
 	if (window.location.search.includes('?success')) {
 
 		PaymentService.checkPayment().then((response) => {
 			console.log(response);
-		});	
+			if (response.status === 200)
+				utilsStore.showToast('Payment successful!')
+			else
+				utilsStore.showToast('Payment failed!', 'danger')
+
+			setTimeout(() => {
+				window.location.href = window.location.origin;
+			}, 2000);
+
+		});
 	}
 })
 
@@ -52,13 +63,8 @@ onBeforeMount(() => {
 				<v-list lines="two">
 					<v-list-subheader>Manage Entities</v-list-subheader>
 
-					<v-list-item
-						v-for="{ name, icon, to, key, children } in categories"
-						:key="name"
-						:prepend-icon="icon"
-						@click="() => $router.push('/admin' + to)"
-						:title="`Manage ${name}s`"
-					/>
+					<v-list-item v-for="{ name, icon, to, key, children } in categories" :key="name" :prepend-icon="icon"
+						@click="() => $router.push('/admin' + to)" :title="`Manage ${name}s`" />
 					<!-- :subtitle="`${children?.length ?? 0} ${(key || name).toLowerCase()}${children?.length === 1 ? '' : 's'}`" -->
 				</v-list>
 			</v-card>
@@ -69,13 +75,8 @@ onBeforeMount(() => {
 				<v-list lines="two">
 					<v-list-subheader>Create Entities</v-list-subheader>
 
-					<v-list-item
-						v-for="{ name, icon, to, key, children } in categories"
-						:key="name"
-						:prepend-icon="icon"
-						@click="() => $router.push('/admin' + to + 'create')"
-						:title="`Create ${name}`"
-					/>
+					<v-list-item v-for="{ name, icon, to, key, children } in categories" :key="name" :prepend-icon="icon"
+						@click="() => $router.push('/admin' + to + 'create')" :title="`Create ${name}`" />
 				</v-list>
 			</v-card>
 		</v-col>

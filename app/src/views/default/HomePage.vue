@@ -1,6 +1,7 @@
 <script setup>
 import { onBeforeMount } from 'vue'
 import PaymentService from '@/services/payment.service';
+import { useUtilsStore } from '@/store'
 
 const onIntersect = {
 	handler: (b, e) => {
@@ -11,6 +12,7 @@ const onIntersect = {
 }
 
 onBeforeMount(() => {
+	const utilsStore = useUtilsStore()
 	const script = document.createElement('script')
 	script.src = 'https://platform.twitter.com/widgets.js'
 	script.async = true
@@ -20,16 +22,26 @@ onBeforeMount(() => {
 	if (window.location.search.includes('?success')) {
 		//check if the payment was successful
 		PaymentService.checkPayment().then((response) => {
-			console.log(response);
-		});	
+			if (response.status === 200)
+				utilsStore.showToast('Payment successful!')
+			else
+				utilsStore.showToast('Payment failed!', 'danger')
+
+			setTimeout(() => {
+				window.location.href = window.location.origin;
+			}, 2000);
+		});
 	}
 })
 </script>
 
 <template>
 	<v-row style="flex-wrap: nowrap;">
-		<v-sheet v-show="$vuetify.display.mdAndUp" class="w-auto me-6 sticky-top sticky-full overflow-x-hidden overflow-y-auto" min-width="300" rounded>
-			<v-card flat loading class="twitter-timeline text-decoration-none" width="300" height="inherit" data-chrome="noheader,nofooter,noscrollbar,noborders" data-lang="en" data-width="300" data-dnt="true" :data-theme="$vuetify.theme.name" href="https://twitter.com/newyorkcity?ref_src=twsrc%5Etfw">
+		<v-sheet v-show="$vuetify.display.mdAndUp"
+			class="w-auto me-6 sticky-top sticky-full overflow-x-hidden overflow-y-auto" min-width="300" rounded>
+			<v-card flat loading class="twitter-timeline text-decoration-none" width="300" height="inherit"
+				data-chrome="noheader,nofooter,noscrollbar,noborders" data-lang="en" data-width="300" data-dnt="true"
+				:data-theme="$vuetify.theme.name" href="https://twitter.com/newyorkcity?ref_src=twsrc%5Etfw">
 				<template #loader="{ isActive }">
 					<v-progress-linear :active="isActive" color="primary" indeterminate />
 				</template>
@@ -51,5 +63,4 @@ onBeforeMount(() => {
 				<v-card width="auto" height="200" v-intersect="onIntersect" />
 			</v-col> -->
 		</v-row>
-	</v-row>
-</template>
+</v-row></template>

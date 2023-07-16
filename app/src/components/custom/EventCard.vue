@@ -3,7 +3,6 @@ import { ref } from 'vue'
 
 import type { Event } from '@/types/event'
 import StripeElementPayment from '../common/StripeElementPayment.vue';
-import StripeCheckout from '../common/StripeCheckout.vue';
 
 defineProps<{ event: Event }>()
 
@@ -169,9 +168,6 @@ const formats: Record<string, Intl.DateTimeFormatOptions> = {
 							</v-chip-group>
 						</v-card-text>
 
-						<!--<v-list>
-							<v-list-item link prepend-icon="fa fa-ticket" title="Buy Tickets" @click="() => $router.push({ name: 'ticketing', query: { event: event.id, date: day.date } })" />
-						</v-list>-->
 					</v-card>
 				</v-menu>
 			</v-chip-group>
