@@ -1,6 +1,6 @@
 <script setup>
 import { onBeforeMount } from 'vue'
-import paymentService from '@/services/payment.service';
+import PaymentService from '@/services/payment.service';
 
 const onIntersect = {
 	handler: (b, e) => {
@@ -19,8 +19,7 @@ onBeforeMount(() => {
 	//if the url possess ?success, then the payment was successful
 	if (window.location.search.includes('?success')) {
 		//check if the payment was successful
-		let paymentIntentId = paymentService.getPaymentIntent();
-		paymentService.checkPayment(paymentIntentId).then((response) => {
+		PaymentService.checkPayment().then((response) => {
 			console.log(response);
 		});	
 	}

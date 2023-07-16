@@ -161,10 +161,7 @@ const formats: Record<string, Intl.DateTimeFormatOptions> = {
 										</v-list>
 
 										<v-list>
-											<StripeElementPayment :event="event" :date="day.date" :time="time" />
-											<v-list-item link prepend-icon="fa fa-ticket" title="Buy Tickets">
-												
-											</v-list-item>
+											<StripeElementPayment :eventId="event['id']" :date="day.date" :time="time" :price="event['price']" />
 										</v-list>
 
 									</v-card>

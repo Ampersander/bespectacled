@@ -58,6 +58,9 @@ class Ticket
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $hour = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $paymentIntentId = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -143,6 +146,18 @@ class Ticket
     public function setHour(?string $hour): self
     {
         $this->hour = $hour;
+
+        return $this;
+    }
+
+    public function getPaymentIntentId(): ?string
+    {
+        return $this->paymentIntentId;
+    }
+
+    public function setPaymentIntentId(?string $paymentIntentId): self
+    {
+        $this->paymentIntentId = $paymentIntentId;
 
         return $this;
     }

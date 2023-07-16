@@ -287,7 +287,6 @@ watchEffect(() => {
 						</v-tab>
 					</v-tabs>
 					
-					
 				</template>
 
 				<template #append>

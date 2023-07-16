@@ -15,7 +15,6 @@ onBeforeMount(() => {
 	//if the url possess ?success, then the payment was successful
 	if (window.location.search.includes('?success')) {
 
-		//check if the payment was successful
 		PaymentService.checkPayment().then((response) => {
 			console.log(response);
 		});	

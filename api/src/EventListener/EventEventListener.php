@@ -28,20 +28,15 @@ class EventEventListener
         }
 
         $event = $this->eventRepository->find($entity->getId());
-
-        //find a ticket with this event
-        $ticket = $this->ticketRepository->findOneBy(['event' => $event]);
+        var_dump($event);
 
         //nb of place in Venue seats
         $nbPlace = $event->getVenue()->getSeats();
-
-        /*$stripeEvent = $this->stripeService->createEvent($entity->getTitle(), $entity->getType());
-        $entity->setStripeEventtId($stripeEvent->id);
-
-        $stripePrice = $this->stripeService->createPrice($stripeEvent->id, $entity->getPrice());
-        $entity->setStripePriceId($stripePrice->id);*/
+        var_dump($nbPlace);
 
         $schedules = $event->getSchedules();
+        var_dump($schedules);
+
         $entityManager = $args->getObjectManager();
         //create tickets for each schedule date an times
 
@@ -52,7 +47,6 @@ class EventEventListener
                 $ticket = new Ticket();
                 $ticket->setEvent($event);
                 $ticket->setPrice($event->getPrice());
-                //$ticket->setStripeTicketId($event->getStripeTicketId());
                 $ticket->setReference(uniqid());
                 $ticket->setStatus(-1);
                 $ticket->setDate($date);

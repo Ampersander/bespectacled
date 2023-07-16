@@ -85,11 +85,11 @@ class StripeService
     }
 
 
-    public function generatePaymentIntent(Event $event, $date, $time)
+    public function generatePaymentIntent(Event $event, $date, $time, $user)
     {
         //create a ticket with status TicketStatusEnum::CREATE
 
-        $ticket = new Ticket();
+      /*  $ticket = new Ticket();
         $ticket->setEvent($event);
         $ticket->setReference(uniqid());
         $ticket->setStatus(TicketStatusEnum::CREATE);
@@ -97,7 +97,7 @@ class StripeService
         $ticket->setHour($time);
 
         $this->entityManager->persist($ticket);
-        $this->entityManager->flush();
+        $this->entityManager->flush();*/
 
 
         //and verify if schedule is available
@@ -128,7 +128,7 @@ class StripeService
             throw new \Exception('No ticket available');
         }
 
-        $price = $event->getPrice();
+        $price = $event->getPrice() *100;
 
         $stripe = new \Stripe\StripeClient($this->stripeSK);
 
@@ -139,6 +139,8 @@ class StripeService
                 'enabled' => true,
             ],
         ]);
+        $ticket->setPaymentIntentId($paymentIntent->client_secret);
+        $ticket->setBuyer($user);
 
         $ticket->setStatus(TicketStatusEnum::PENDING);
         $this->entityManager->flush();
@@ -149,29 +151,32 @@ class StripeService
         ];
     }
 
+
     //check if payment is successful
-    public function checkPayment($paymentIntentId, Event $event, User $user)
+    public function checkPayment($paymentIntentId)
     {
         $data = null;
         try {
             $stripe = new \Stripe\StripeClient($this->stripeSK);
+
+           
+            $pi = explode("_secret_", $paymentIntentId)[0];
             $paymentIntent = $stripe->paymentIntents->retrieve(
-                $paymentIntentId,
+                $pi,
                 []
             );
-            $ticket = $event->getTickets()->filter(function ($ticket) {
-                return $ticket->getStatus() === TicketStatusEnum::PENDING;
-            })->first();
-            if (!$ticket) {
-                throw new \Exception('No ticket available');
-            }
+            //recover ticket with paymentIntentId
+            $ticket = $this->entityManager->getRepository(Ticket::class)->findOneBy(['paymentIntentId' => $paymentIntentId]);
+
             // Vérifiez l'état du paiement (succeeded, pending, etc.)
             if ($paymentIntent->status === 'succeeded') {
 
-
                 $ticket->setStatus(TicketStatusEnum::PAID);
-                $ticket->setBuyer($user);
                 $this->entityManager->flush();
+                //get user from ticket
+                $user = $ticket->getBuyer();
+                //get event from ticket
+                $event = $ticket->getEvent();
 
                 $this->mailer->sendTicketEmail($user, $event, $ticket);
 
@@ -182,15 +187,11 @@ class StripeService
 
                 // Paiement réussi, effectuez les actions nécessaires (par exemple, marquez le ticket comme payé dans la base de données)
             } else {
-                $ticket->setStatus(TicketStatusEnum::CREATE);
-                $this->entityManager->flush();
                 // Le paiement a échoué, effectuez les actions nécessaires (par exemple, affichez un message d'erreur à l'utilisateur)
             }
         } catch (\Stripe\Exception\ApiErrorException $e) {
             // Affichez un message d'erreur à l'utilisateur
 
-            $ticket->setStatus(TicketStatusEnum::CREATE);
-            $this->entityManager->flush();
             $data = [
                 'status' => 'error',
                 'message' => $e->getMessage()

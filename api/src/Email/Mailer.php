@@ -53,7 +53,7 @@ class Mailer extends AbstractController
 		$email = (new TemplatedEmail())
 			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
 			->to($user->getEmail())
-			->subject('Your ticket for the event ' . $event->getName() . '!')
+			->subject('Your ticket for the event ' . $event->getTitle() . '!')
 			->htmlTemplate('emails/ticket.html.twig')
 			->context(compact('user', 'event', 'ticket'));
 

@@ -10,7 +10,7 @@ class PaymentService {
 	}
 	checkPayment() {
 		console.log(this.getPaymentIntent());
-		return axios.post(API_URL + '/check-payment', this.getPaymentIntent(), { headers: headers() })
+		return axios.post(API_URL + '/check-payment', {paymentIntentId:this.getPaymentIntent()}, { headers: headers() })
 	}
 	setPaymentIntent(paymentIntent: any = null) {
 		paymentIntent ? localStorage.setItem('paymentIntent', JSON.stringify(paymentIntent)) : localStorage.removeItem('paymentIntent');

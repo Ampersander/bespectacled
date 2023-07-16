@@ -282,7 +282,7 @@ watch([events, schedule], () => {
 													</v-list>
 
 													<v-list>
-														<v-list-item link prepend-icon="fa fa-ticket" title="Buy Tickets3" @click="() => router.push({ name: 'ticketing', query: { event: attr.customData.event.id, time } })" />
+														<v-list-item link prepend-icon="fa fa-ticket" title="Buy Tickets" @click="() => router.push({ name: 'ticketing', query: { event: attr.customData.event.id, time } })" />
 													</v-list>
 												</v-card>
 											</v-menu>
