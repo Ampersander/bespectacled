@@ -45,7 +45,7 @@ class SecurityController extends AbstractController
     #[Route('/confirm-user/{token}', name: 'default_confirm_token')]
     public function confirmUser(string $token, UserConfirmationService $userConfirmationService) {
         $userConfirmationService->confirmUser($token);
-        return $this->redirect('/');
+        return $this->redirect('/'); // TODO redirect to frontend not backend
     }
 
     #[Route('/forgot-password/{token}', name: 'forgot_password_token')]
