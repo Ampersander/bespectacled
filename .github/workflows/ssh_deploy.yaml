@@ -1,63 +1,58 @@
-name: SSH Deploy
+name: SSH Deployment
+
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+
 jobs:
-  build:
-    runs-on: ubuntu-20.04
+  deploy:
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-      # Install PHP
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.0"
-          coverage: none
-          tools: composer:v2
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, iconv, json, mbstring, pdo
-        env:
-          update: true
-      - name: Check PHP Version
-        run: php -v
-      # Install backend dependencies (Composer)
-      - name: Validate composer.json and composer.lock
-        run: composer validate
-      - name: Get composer cache directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-      - name: Cache composer dependencies
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-      - name: Install Composer dependencies
-        run: composer install
-      # Prepare .env file for production
-      - name: Make production envfile
-        uses: SpicyPizza/create-envfile@v1
-        with:
-          envkey_APP_ENV: prod
-          envkey_APP_DEBUG: false
-          envkey_APP_SECRET: ${{ secrets.APP_SECRET }}
-          file_name: .env
-      # Copying files and artifacts via SSH
-      - name: Copying files to server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          passphrase: ""
-          rm: true
-          source: "./"
-          target: ${{ secrets.REMOTE_TARGET }}
-      # Run commands on production
-      - name: Executing remote ssh commands
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Configure SSH
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          passphrase: ""
-          script: rsync -a --exclude={'var','temp'} --delete ${{ secrets.REMOTE_TARGET }} ${{ secrets.REMOTE_TARGET_DEPLOY }}
+          host: ${{ secrets.SSH_HOST }}
+          username: debian
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+
+      - name: Create env file
+        run: |
+          touch .env
+          echo "API_PORT=${{secrets.API_PORT}}" >> .env
+          echo "APP_PORT=${{secrets.APP_PORT}}" >> .env
+          echo "APP_ENV=${{secrets.APP_ENV}}" >> .env
+          echo "APP_SECRET=${{secrets.APP_SECRET}}" >> .env
+          echo "DATABASE_URL=${{secrets.DATABASE_URL}}" >> .env
+          echo "JWT_SECRET=${{secrets.JWT_SECRET}}" >> .env
+          echo "JWT_PASSPHRASE=${{secrets.JWT_PASSPHRASE}}" >> .env
+          echo "JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}" >> .env
+          echo "JWT_PUBLIC_KEY=${{secrets.JWT_PUBLIC_KEY}}" >> .env
+          echo "CORS_ALLOW_ORIGIN=${{secrets.CORS_ALLOW_ORIGIN}}" >> .env
+          echo "APP_NAME=${{secrets.APP_NAME}}" >> .env
+          echo "APP_MAIL=${{secrets.APP_MAIL}}" >> .env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> .env
+          echo "MERCURE_URL=${{secrets.MERCURE_URL}}" >> .env
+          echo "MERCURE_PUBLIC_URL=${{secrets.MERCURE_PUBLIC_URL}}" >> .env
+          echo "MERCURE_JWT_SECRET=${{secrets.MERCURE_JWT_SECRET}}" >> .env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> .env
+          echo "VITE_STRIPE_PUBLISHABLE_KEY=${{secrets.VITE_STRIPE_PUBLISHABLE_KEY}}" >> .env
+          echo "VITE_STRIPE_ACCOUNT=${{secrets.VITE_STRIPE_ACCOUNT}}" >> .env
+          echo "API_VERSION=${{secrets.API_VERSION}}" >> .env
+          echo "VITE_NODE_ENV=${{secrets.VITE_NODE_ENV}}" >> .env
+          echo "VITE_API_URL=${{secrets.VITE_API_URL}}" >> .env
+          echo "LOCALE=${{secrets.LOCALE}}" >> .env
+
+      - name: Create Docker network
+        run: docker network create infrastructure
+
+      - name: Build Docker image
+        run: docker-compose build
+
+      - name: Start Docker containers
+        run: docker-compose up -d

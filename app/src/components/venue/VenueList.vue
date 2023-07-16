@@ -129,15 +129,15 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 			</template>
 
 			<template #item.price="{ item }">
-				${{ item.raw.price }}
+				{{ item.raw.price }}$
 			</template>
 
 			<template #item.seats="{ item }">
-				${{ item.raw.seats }}
+				{{ item.raw.seats }}
 			</template>
 
 			<template #item.location="{ item }">
-				${{ item.raw.location }}
+				{{ item.raw.location }}
 			</template>
 
 			<template #item.events="{ item }">

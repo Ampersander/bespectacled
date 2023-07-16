@@ -8,7 +8,80 @@ import { useDate } from 'vuetify/labs/date'
 import Carousel from '@/components/custom/Carousel.vue'
 import NotFound from '@/components/custom/NotFound.vue'
 import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore, useUtilsStore, useVenueListStore } from '@/store'
-
+const hour = "20:30";
+const date2 = "2023-08-23";
+const event = {
+    "@id": "/api/events/8",
+    "@type": "Event",
+    "id": 8,
+    "slug": "madonna",
+    "title": "Madonna",
+    "type": "concert",
+    "price": 165,
+    "description": "Quos a minus quos laudantium porro. Voluptatem suscipit quo consequatur ipsa repellendus voluptas quam.\n\nMolestiae consectetur aut esse libero. Nesciunt dolore et id aspernatur sapiente voluptatum sint. Nobis et et et fuga fugit consequatur cum. Laborum sequi sit debitis tempora aperiam.\n\nConsequatur voluptates error ut recusandae quis. Facilis sit ea quia velit. Laudantium ea et sit enim. Sunt odio aperiam tenetur rerum aut tempore.",
+    "src": "https://www.nyc.com/images/concerts/modonna_23.jpg",
+    "venue": {
+        "@id": "/api/venues/6",
+        "@type": "Venue",
+        "id": 6,
+        "name": "Madison Square Garden",
+        "type": "concert",
+        "price": 6432,
+        "description": "Voluptas et tempora repellat corporis excepturi. Dolores quaerat odit quia nisi accusantium natus voluptatem ut. Corporis eligendi ut ut sapiente. Qui quidem explicabo optio amet velit aut delectus iure.\n\nAsperiores perspiciatis deserunt omnis. Mollitia unde id in. Porro molestiae in maxime sint doloremque similique aut. Dolores consectetur odio facere odio modi consequatur dicta.\n\nSit facere cupiditate doloremque odio ad asperiores quaerat. Accusamus sint dolorem earum ut.\n\nMolestias quo omnis minima illo delectus iste. Accusantium autem suscipit quia et. Dolorum quos aliquam delectus accusantium quidem. Eius a corrupti totam placeat delectus voluptatem.\n\nSed autem ut voluptatem est quod alias iste. Aut tempore pariatur et libero explicabo quia. Ea aperiam unde voluptatem tempora beatae neque. Est molestiae et laboriosam dolor odit. Vel excepturi similique quia quas beatae et nam.",
+        "seats": 20000,
+        "location": "4 Pennsylvania Plaza - Manhattan, NYC, USA",
+        "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Madison_Square_Garden_%28MSG%29_-_Full_%2848124330357%29.jpg/413px-Madison_Square_Garden_%28MSG%29_-_Full_%2848124330357%29.jpg"
+    },
+    "artists": [
+        {
+            "@id": "/api/users/4",
+            "@type": "User",
+            "id": 4,
+            "username": "Madonna",
+            "email": "artist3@bespectacled.com"
+        }
+    ],
+    "schedules": [
+        {
+            "@id": "/api/schedules/34",
+            "@type": "Schedule",
+            "id": 34,
+            "date": "2023-08-23",
+            "times": [
+                "20:30"
+            ]
+        },
+        {
+            "@id": "/api/schedules/35",
+            "@type": "Schedule",
+            "id": 35,
+            "date": "2023-08-24",
+            "times": [
+                "20:30"
+            ]
+        },
+        {
+            "@id": "/api/schedules/36",
+            "@type": "Schedule",
+            "id": 36,
+            "date": "2023-08-26",
+            "times": [
+                "20:30"
+            ]
+        },
+        {
+            "@id": "/api/schedules/37",
+            "@type": "Schedule",
+            "id": 37,
+            "date": "2023-08-27",
+            "times": [
+                "20:30"
+            ]
+        }
+    ]
+};
+import StripeElementPayment from '../components/common/StripeElementPayment.vue';
+import StripeCheckout from '../components/common/StripeCheckout.vue';
 const date = useDate()
 const theme = useTheme()
 const router = useRouter()
@@ -149,8 +222,8 @@ watchEffect(() => {
 							<v-btn :="props" prepend-icon="fa fa-search" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'">
 								Search
 								<div class="py-1 px-2 ms-2 border rounded text-disabled text-caption">Press /</div>
-							</v-btn>
-						</template>
+							</v-btn>					
+						</template>		
 
 						<template #="{ isActive }">
 							<v-card>
@@ -213,6 +286,7 @@ watchEffect(() => {
 							{{ name }}
 						</v-tab>
 					</v-tabs>
+					
 				</template>
 
 				<template #append>

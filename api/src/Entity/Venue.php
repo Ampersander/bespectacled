@@ -86,9 +86,13 @@ class Venue
     #[ORM\OneToMany(mappedBy: 'venue', targetEntity: Event::class)]
     private Collection $events;
 
+    #[ORM\OneToMany(mappedBy: 'venue', targetEntity: Booking::class)]
+    private $bookings;
+
     public function __construct()
     {
         $this->events = new ArrayCollection();
+        $this->bookings = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -217,6 +221,33 @@ class Venue
             if ($event->getVenue() === $this) {
                 $event->setVenue(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Booking[]
+     */
+    public function getBookings(): Collection
+    {
+        return $this->bookings;
+    }
+
+    public function addBooking(Booking $booking): self
+    {
+        if (!$this->bookings->contains($booking)) {
+            $this->bookings[] = $booking;
+            $booking->setVenue($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooking(Booking $booking): self
+    {
+        if ($this->bookings->removeElement($booking) && $booking->getVenue() === $this) {
+            $booking->setVenue(null);
         }
 
         return $this;

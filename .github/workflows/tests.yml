@@ -39,6 +39,8 @@ jobs:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
+      - name: Allow plugin
+        run: composer config --no-plugins allow-plugins.endroid/installer true
       - name: Install Composer dependencies
         run: composer install
       # —— Code style —— (Based on this package: https://github.com/OskarStark/php-cs-fixer-ga)

@@ -11,9 +11,11 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class Mailer extends AbstractController
 {
-    public function __construct(private MailerInterface $mailer) {}
+	public function __construct(private MailerInterface $mailer)
+	{
+	}
 
-    public function sendConfirmationEmail(User $user): void
+	public function sendConfirmationEmail(User $user): void
 	{
 		$email = (new TemplatedEmail())
 			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
@@ -29,8 +31,9 @@ class Mailer extends AbstractController
 		}
 	}
 
-    public function sendRecoverPasswordEmail(User $user): void{
-        $email = (new TemplatedEmail())
+	public function sendRecoverPasswordEmail(User $user): void
+	{
+		$email = (new TemplatedEmail())
 			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
 			->to($user->getEmail())
 			->subject('Recover your account!')
@@ -42,5 +45,22 @@ class Mailer extends AbstractController
 		} catch (TransportExceptionInterface $e) {
 			PHP_EOL . $e;
 		}
-    }
+	}
+
+	//function to send email when a ticket is bought
+	public function sendTicketEmail(User $user, $event, $ticket): void
+	{
+		$email = (new TemplatedEmail())
+			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+			->to($user->getEmail())
+			->subject('Your ticket for the event ' . $event->getTitle() . '!')
+			->htmlTemplate('emails/ticket.html.twig')
+			->context(compact('user', 'event', 'ticket'));
+
+		try {
+			$this->mailer->send($email);
+		} catch (TransportExceptionInterface $e) {
+			PHP_EOL . $e;
+		}
+	}
 }

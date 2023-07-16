@@ -21,7 +21,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: "`ticket`")]
 #[ApiResource(
     normalizationContext: ['groups' => ['ticket:read']],
-    denormalizationContext: ['groups' => ['ticket:write']],
+    denormalizationContext: ['groups' => ['ticket:write']],  
     // security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')",
 )]
 class Ticket
@@ -37,11 +37,10 @@ class Ticket
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::INTEGER)]
     #[Groups(['ticket:read', 'ticket:write', 'user:read', 'event:read', 'transaction:read'])]
-    private int $status = TicketStatusEnum::PENDING;
+    private int $status = TicketStatusEnum::CREATE;
 
-    #[Assert\NotBlank]
     #[Groups(['ticket:read', 'ticket:write'])]
-    #[ORM\ManyToOne(inversedBy: 'tickets'), ORM\JoinColumn(nullable: false)]
+    #[ORM\ManyToOne(inversedBy: 'tickets'), ORM\JoinColumn(nullable: true)]
     private ?User $buyer = null;
 
     #[Assert\NotBlank]
@@ -49,10 +48,18 @@ class Ticket
     #[ORM\ManyToOne(inversedBy: 'tickets'), ORM\JoinColumn(nullable: false)]
     private ?Event $event = null;
 
-    #[Assert\NotBlank]
     #[Groups(['ticket:read'])]
-    #[ORM\ManyToOne(inversedBy: 'tickets'), ORM\JoinColumn(nullable: false)]
+    #[ORM\ManyToOne(inversedBy: 'tickets'), ORM\JoinColumn(nullable: true)]
     private ?Transaction $transaction = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $day = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $hour = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $paymentIntentId = null;
 
     public function getId(): ?int
     {
@@ -88,7 +95,7 @@ class Ticket
         return $this->status;
     }
 
-    public function setStatus(TicketStatusEnum $status): self
+    public function setStatus( $status): self
     {
         $this->status = $status;
 
@@ -115,6 +122,42 @@ class Ticket
     public function setTransaction(?Transaction $transaction): self
     {
         $this->transaction = $transaction;
+
+        return $this;
+    }
+
+    public function getDay(): ?string
+    {
+        return $this->day;
+    }
+
+    public function setDay(?string $day): self
+    {
+        $this->day = $day;
+
+        return $this;
+    }
+
+    public function getHour(): ?string
+    {
+        return $this->hour;
+    }
+
+    public function setHour(?string $hour): self
+    {
+        $this->hour = $hour;
+
+        return $this;
+    }
+
+    public function getPaymentIntentId(): ?string
+    {
+        return $this->paymentIntentId;
+    }
+
+    public function setPaymentIntentId(?string $paymentIntentId): self
+    {
+        $this->paymentIntentId = $paymentIntentId;
 
         return $this;
     }

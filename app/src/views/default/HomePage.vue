@@ -1,5 +1,6 @@
 <script setup>
 import { onBeforeMount } from 'vue'
+import PaymentService from '@/services/payment.service';
 
 const onIntersect = {
 	handler: (b, e) => {
@@ -14,6 +15,14 @@ onBeforeMount(() => {
 	script.src = 'https://platform.twitter.com/widgets.js'
 	script.async = true
 	document.head.appendChild(script)
+
+	//if the url possess ?success, then the payment was successful
+	if (window.location.search.includes('?success')) {
+		//check if the payment was successful
+		PaymentService.checkPayment().then((response) => {
+			console.log(response);
+		});	
+	}
 })
 </script>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, onBeforeMount } from 'vue'
+import PaymentService from '@/services/payment.service';
 
 const categories = ref([
 	{ name: 'User', icon: 'fa fa-user-tie', to: '/users/', children: [] },
@@ -9,6 +10,17 @@ const categories = ref([
 ])
 
 const parallax = new URL('@/assets/stadium.jpeg', import.meta.url).href
+
+onBeforeMount(() => {
+	//if the url possess ?success, then the payment was successful
+	if (window.location.search.includes('?success')) {
+
+		PaymentService.checkPayment().then((response) => {
+			console.log(response);
+		});	
+	}
+})
+
 </script>
 
 <template>
