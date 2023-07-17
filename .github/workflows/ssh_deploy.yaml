@@ -1,6 +1,9 @@
 name: SSH Deployment
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   php-unit-and-functional-tests:

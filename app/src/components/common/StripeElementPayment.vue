@@ -5,7 +5,7 @@
       <StripeElement type='payment' ref="card" :elements="elements" :options="cardOptions" />
     </StripeElements>
   </template>
-  <v-list-item link prepend-icon="fa fa-ticket" @click="pay" :disabled="!isConnected">
+  <v-list-item link prepend-icon="fa fa-ticket" @click="pay" :disabled="!isConnected||disabled">
     <v-list-item-title>Buy Ticket {{ price }}
       <i class="fa fa-dollar v-icon notranslate v-theme--dark v-icon--size-default text-yellow"
         aria-hidden="true"></i></v-list-item-title>
@@ -47,6 +47,10 @@ export default defineComponent({
     const isConnected = computed(() =>
       user?.value ? true : false
     )
+
+    const disabled = ref(user?.value ? true : false);
+
+
     const stripeKey = ref(STRIPE_PK) // Votre clé d'API Stripe de test
     const instanceOptions = ref({
       // Options d'instance Stripe (le cas échéant)
@@ -66,6 +70,7 @@ export default defineComponent({
     const price = ref(props.price);
     const clientSecret = ref('');
     const utilsStore = useUtilsStore()
+    
 
     onBeforeMount(() => {
 
@@ -85,7 +90,20 @@ export default defineComponent({
         stripePromise.then(() => {
           stripeLoaded.value = true
         })
-      });
+      }).catch((err: any) => {
+          
+          if (err.response) {
+            disabled.value = true;
+            // Access the error response from the API
+            const errorResponse = err.response.data;
+            console.log(errorResponse);
+            utilsStore.showToast(errorResponse.detail, 'danger');
+          } else {
+            // Handle other types of errors
+            console.log(err);
+            utilsStore.showToast('An error occurred during the purchase.', 'danger');
+          }
+        });
 
     })
 
@@ -105,6 +123,17 @@ export default defineComponent({
           } else {
             utilsStore.showToast('Payment successful!')
           }
+        }).catch((err: any) => {
+          if (err.response) {
+            // Access the error response from the API
+            const errorResponse = err.response.data;
+            console.log(errorResponse);
+            utilsStore.showToast(errorResponse.detail, 'danger');
+          } else {
+            // Handle other types of errors
+            console.log(err);
+            utilsStore.showToast('An error occurred during the purchase.', 'danger');
+          }
         });
 
     }
@@ -119,6 +148,7 @@ export default defineComponent({
       card,
       elms,
       pay,
+      disabled
     }
   },
 })

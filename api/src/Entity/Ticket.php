@@ -61,6 +61,11 @@ class Ticket
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $paymentIntentId = null;
 
+    //lastModified
+    #[Groups(['ticket:read'])]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $lastModified = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -158,6 +163,18 @@ class Ticket
     public function setPaymentIntentId(?string $paymentIntentId): self
     {
         $this->paymentIntentId = $paymentIntentId;
+
+        return $this;
+    }
+
+    public function getLastModified(): ?\DateTimeInterface
+    {
+        return $this->lastModified;
+    }
+
+    public function setLastModified(?\DateTimeInterface $lastModified): self
+    {
+        $this->lastModified = $lastModified;
 
         return $this;
     }
