@@ -151,16 +151,14 @@ onBeforeUnmount(() => store.$reset())
 <template>
 	<v-alert v-if="error || authError" type="error" class="mb-4" v-text="error || authError" closable />
 
-<<<<<<< Updated upstream
+
 	<Toolbar v-if="$route.name === 'profile'" color="primary-darken-1" :breadcrumb="breadcrumb" :is-loading="authIsLoading" main :partnered="item?.roles.includes('ASK_TO_BECOME_ARTIST')" @partner="partner(inputs)" @cancel-partner="cancelPartner(inputs)" />
 	<Toolbar v-else color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item?.username ?? '', to: { name: 'artists' }}]" :is-loading="isLoading || authIsLoading" :nav="nav" main @nav="silentPush" />
-=======
 	<Toolbar v-if="$route.name === 'profile'" color="primary-darken-1" :breadcrumb="breadcrumb" :is-loading="authIsLoading"
 		main />
 	<Toolbar v-else color="primary-darken-1"
 		:breadcrumb="[...breadcrumb, { title: item?.username ?? '', to: { name: 'artists' } }]"
 		:is-loading="isLoading || authIsLoading" :nav="nav" main @nav="silentPush" />
->>>>>>> Stashed changes
 
 	<v-tabs v-model="tab" color="primary" fixed-tabs>
 		<v-tab v-for="tab, i in tabs" :="tab" :value="i" />
