@@ -1,0 +1,20 @@
+{% block subject %}Confirmation of Booking Request{% endblock %}
+
+{% block body_html %}
+    <h1>Confirmation of Booking Request</h1>
+    <p>Hello {{  booking.getClient().getUsername() }},</p>
+    
+    <p>Your booking request has been received. Here are the details:</p>
+    
+    <ul>
+        <li><strong>Venue:</strong> {{  booking.getVenue().getName() }}</li>
+        <li><strong>Date:</strong> {{ booking.date|date('Y-m-d') }}</li>
+        <li><strong>Price:</strong> {{ booking.getVenue().getPrice() }} EUR</li>
+    </ul>
+    
+    <p>We will review your request and get back to you with further instructions and payment details. 
+    Thank you for choosing our venue. We look forward to hosting you!</p>
+    
+    <p>Best regards,</p>
+    <p>The Venue Management Team</p>
+{% endblock %}

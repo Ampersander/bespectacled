@@ -26,14 +26,6 @@ class Booking
     #[Groups(['booking:read', 'booking:write', 'user:read', 'venue:read', 'transaction:read'])]
     private int $status = BookingStatusEnum::PENDING;
 
-    #[Groups(['booking:read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
-
-    #[Groups('booking:read')]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeImmutable $updatedAt = null;
-
     #[Assert\NotBlank]
     #[Groups(['booking:read', 'booking:write'])]
     #[ORM\ManyToOne(inversedBy: 'bookings'), ORM\JoinColumn(nullable: false)]
@@ -44,10 +36,21 @@ class Booking
     #[ORM\ManyToOne(inversedBy: 'bookings'), ORM\JoinColumn(nullable: false)]
     private ?Venue $venue = null;
 
-    #[Assert\NotBlank]
     #[Groups(['booking:read', 'booking:write'])]
     #[ORM\ManyToOne(inversedBy: 'bookings'), ORM\JoinColumn(nullable: true)]
     private ?Transaction $transaction = null;
+
+    //add date
+    #[Assert\NotBlank]
+    #[Groups(['booking:read', 'booking:write'])]
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTimeInterface $date = null;
+
+    //add PaymentIntentId
+    #[Groups(['booking:read', 'booking:write'])]
+    #[ORM\Column(type: Types::STRING, nullable: true)]
+    private ?string $paymentIntentId = null;
+
 
     public function getId(): ?int
     {
@@ -59,33 +62,9 @@ class Booking
         return $this->status;
     }
 
-    public function setStatus(BookingStatusEnum $status): self
+    public function setStatus($status): self
     {
         $this->status = $status;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
 
         return $this;
     }
@@ -122,6 +101,30 @@ class Booking
     public function setTransaction(?Transaction $transaction): self
     {
         $this->transaction = $transaction;
+
+        return $this;
+    }
+
+    public function getDate(): ?\DateTimeInterface
+    {
+        return $this->date;
+    }
+
+    public function setDate(\DateTimeInterface $date): self
+    {
+        $this->date = $date;
+
+        return $this;
+    }
+
+    public function getPaymentIntentId(): ?string
+    {
+        return $this->paymentIntentId;
+    }
+
+    public function setPaymentIntentId(?string $paymentIntentId): self
+    {
+        $this->paymentIntentId = $paymentIntentId;
 
         return $this;
     }

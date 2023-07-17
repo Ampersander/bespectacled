@@ -1,0 +1,21 @@
+{% block subject %}
+    Your booking has been cancelled
+{% endblock %}
+
+{% block body_html %}
+    <p>Hello {{ booking.getClient().getUsername() }},</p>
+    
+    <p>We regret to inform you that your booking for {{ booking.getVenue().getName() }} on {{ booking.date|date('F d, Y') }} has been cancelled.</p>
+    
+    <p>Booking Details:</p>
+    
+    <ul>
+        <li><strong>Venue:</strong> {{ booking.getVenue().getName() }}</li>
+        <li><strong>Date:</strong> {{ booking.date|date('F d, Y') }}</li>
+    </ul>
+    
+    <p>We apologize for any inconvenience caused. If you have any further questions or concerns, please feel free to contact us.</p>
+    
+    <p>Regards,</p>
+    <p>The BeSpectacled Team</p>
+{% endblock %}

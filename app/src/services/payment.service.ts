@@ -8,6 +8,10 @@ class PaymentService {
 	generatePaymentIntent(data: any) {
 		return axios.post(API_URL + '/generate-intent', data, { headers: headers() })
 	}
+	generatePaymentIntentBooking(data: any) {
+		console.log(data);
+		return axios.post(API_URL + '/generate-intent-booking', data, { headers: headers() })
+	}
 	checkPayment() {
 		console.log(this.getPaymentIntent());
 		return axios.post(API_URL + '/check-payment', {paymentIntentId:this.getPaymentIntent()}, { headers: headers() })

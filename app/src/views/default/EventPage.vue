@@ -168,7 +168,7 @@ onBeforeUnmount(() => store.$reset())
 																</v-list>
 
 																<v-list>
-																	<v-list-item link prepend-icon="fa fa-ticket" title="Buy Tickets" @click="() => $router.push({ name: 'ticketing', query: { event: item?.id, date: day.date, time } })" />
+																	<!--<v-list-item link prepend-icon="fa fa-ticket" title="Buy Tickets" @click="() => $router.push({ name: 'ticketing', query: { event: item?.id, date: day.date, time } })" />-->
 																</v-list>
 															</v-card>
 														</v-menu>

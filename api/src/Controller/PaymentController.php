@@ -12,7 +12,7 @@ use App\Service\StripeService;
 use App\Entity\Event;
 use App\Entity\User;
 use ApiPlatform\Core\Annotation\ApiResource;
-
+use App\Entity\Venue;
 
 #[ApiResource(
   collectionOperations: [],
@@ -168,5 +168,24 @@ class PaymentController extends AbstractController
 
   public function checkTicketAvailable(Event $event, User $user)
   {
+  }
+
+  #[Route('/api/generate-intent-booking', name: 'payment_generate_intent_booking', methods: ['POST'])]
+  public function generatePaymentIntentBooking(Request $request, EntityManagerInterface $entityManager): Response
+  {
+    $content = json_decode($request->getContent());
+    $venueId = $content->venueId;
+    $date = $content->date;
+    $paymentMethodId = $content->paymentMethodId;
+
+    $venue = $entityManager->getRepository(Venue::class)->find($venueId);
+    $user = $this->getUser();
+
+    $data = $this->stripeService->generatePaymentIntentBooking($venue, $date, $user, $paymentMethodId);
+
+    $response = new Response(json_encode($data));
+    $response->headers->set('Content-Type', 'application/json');
+
+    return $response;
   }
 }

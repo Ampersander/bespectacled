@@ -63,4 +63,71 @@ class Mailer extends AbstractController
 			PHP_EOL . $e;
 		}
 	}
+
+	public function sendAskToBecomeArtist($user): void
+	{
+		$email = (new TemplatedEmail())
+			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+			->to('admin@bespectacled.com')
+			->subject('A user ask to become an artist!')
+			->htmlTemplate('emails/ask-to-become-artist.html.twig')
+			->context(compact('user'));
+
+		try {
+			$this->mailer->send($email);
+		} catch (TransportExceptionInterface $e) {
+			PHP_EOL . $e;
+		}
+	}
+
+	public function sendBookingValidated($booking): void
+	{
+		$email = (new TemplatedEmail())
+			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+			->to($booking->getClient()->getEmail())
+			->subject('Your booking is validated!')
+			->htmlTemplate('emails/booking-validated.html.twig')
+			->context(compact('booking'));
+
+		try {
+			$this->mailer->send($email);
+		} catch (TransportExceptionInterface $e) {
+			PHP_EOL . $e;
+		}
+	}
+
+	//sendBookingCancelled
+
+	public function sendBookingCancelled($booking): void
+	{
+		$email = (new TemplatedEmail())
+			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+			->to($booking->getClient()->getEmail())
+			->subject('Your booking is cancelled!')
+			->htmlTemplate('emails/booking-cancelled.html.twig')
+			->context(compact('booking'));
+
+		try {
+			$this->mailer->send($email);
+		} catch (TransportExceptionInterface $e) {
+			PHP_EOL . $e;
+		}
+	}
+
+	//sendAskBooking
+	public function sendAskBooking($booking): void
+	{
+		$email = (new TemplatedEmail())
+			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+			->to($booking->getClient()->getEmail())
+			->subject('A user ask to book a venue!')
+			->htmlTemplate('emails/ask-booking.html.twig')
+			->context(compact('booking'));
+
+		try {
+			$this->mailer->send($email);
+		} catch (TransportExceptionInterface $e) {
+			PHP_EOL . $e;
+		}
+	}
 }
