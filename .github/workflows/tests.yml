@@ -11,6 +11,25 @@ jobs:
       matrix:
         php-versions: ["8.1"]
     steps:
+      - name: Create env file
+        run: |
+          touch .env
+          echo "APP_ENV=${{secrets.APP_ENV}}" >> api/.env
+          echo "APP_SECRET=${{secrets.APP_SECRET}}" >> api/.env
+          echo "DATABASE_URL=${{secrets.DATABASE_URL}}" >> api/.env
+          echo "JWT_SECRET=${{secrets.JWT_SECRET}}" >> api/.env
+          echo "JWT_PASSPHRASE=${{secrets.JWT_PASSPHRASE}}" >> api/.env
+          echo "JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}" >> api/.env
+          echo "JWT_PUBLIC_KEY=${{secrets.JWT_PUBLIC_KEY}}" >> api/.env
+          echo "CORS_ALLOW_ORIGIN=${{secrets.CORS_ALLOW_ORIGIN}}" >> api/.env
+          echo "APP_NAME=${{secrets.APP_NAME}}" >> api/.env
+          echo "APP_MAIL=${{secrets.APP_MAIL}}" >> api/.env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> api/.env
+          echo "MERCURE_URL=${{secrets.MERCURE_URL}}" >> api/.env
+          echo "MERCURE_PUBLIC_URL=${{secrets.MERCURE_PUBLIC_URL}}" >> api/.env
+          echo "MERCURE_JWT_SECRET=${{secrets.MERCURE_JWT_SECRET}}" >> api/.env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> api/.env
+
       # —— Setup Github actions —————————————————————————————————————————————
       # https://github.com/actions/checkout (official)
       - name: Git checkout placeholder-service

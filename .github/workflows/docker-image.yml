@@ -1,14 +1,8 @@
-name: Docker Build & Push
-
-on:
-  push:
-    branches:
-      - main
-
+name: Build and push Docker images
+on: [push]
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -29,6 +23,21 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/bespectacled-api:latest
+        env:
+          APP_ENV: ${{ secrets.APP_ENV }}
+          APP_SECRET: ${{ secrets.APP_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_PASSPHRASE: ${{ secrets.JWT_PASSPHRASE }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
+          CORS_ALLOW_ORIGIN: ${{ secrets.CORS_ALLOW_ORIGIN }}
+          APP_NAME: ${{ secrets.APP_NAME }}
+          APP_MAIL: ${{ secrets.APP_MAIL }}
+          MAILER_DSN: ${{ secrets.MAILER_DSN }}
+          MERCURE_URL: ${{ secrets.MERCURE_URL }}
+          MERCURE_PUBLIC_URL: ${{ secrets.MERCURE_PUBLIC_URL }}
+          MERCURE_JWT_SECRET: ${{ secrets.MERCURE_JWT_SECRET }}
 
       - name: Build and push Docker images - Bespectacled APP
         uses: docker/build-push-action@v2
@@ -37,3 +46,10 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/bespectacled-app:latest
+        env:
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          VITE_STRIPE_ACCOUNT: ${{ secrets.VITE_STRIPE_ACCOUNT }}
+          API_VERSION: ${{ secrets.API_VERSION }}
+          VITE_NODE_ENV: ${{ secrets.VITE_NODE_ENV }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          LOCALE: ${{ secrets.LOCALE }}
