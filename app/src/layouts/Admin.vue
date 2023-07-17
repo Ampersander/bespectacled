@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useDate } from 'vuetify/labs/date'
 
+import BackToTop from '@/components/common/BackToTop.vue'
 import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore, useUtilsStore, useVenueListStore } from '@/store'
 
 const date = useDate()
@@ -234,6 +235,17 @@ watchEffect(() => {
 				<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" append-icon="fa fa-plus-circle" :title="`Create ${name.slice(0, -1)}`" @click="router.push('/admin' + to + '/create')" />
 			</v-list>
 		</v-navigation-drawer>
+
+		<!-- Message Toast -->
+		<v-snackbar :="utilsStore.toast" elevation="24" transition="slide-y-transition">
+			{{ utilsStore.toast.text }}
+
+			<template #actions>
+				<v-btn icon="fa fa-times" color="white" @click="utilsStore.hideToast()" />
+			</template>
+		</v-snackbar>
+
+		<BackToTop />
 
 		<v-main style="--v-layout-top: 48px;">
 			<v-container class="mb-7">

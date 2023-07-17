@@ -17,9 +17,9 @@ use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 class UserRegisterSubscriber implements EventSubscriberInterface
 {
 	public function __construct(
-		private UserPasswordHasherInterface $userPasswordHasher,
+		private Mailer $mailer,
 		private TokenGenerator $tokenGenerator,
-		private Mailer $mailer
+		private UserPasswordHasherInterface $userPasswordHasher
 	) {}
 
 	/**
@@ -28,7 +28,7 @@ class UserRegisterSubscriber implements EventSubscriberInterface
 	public static function getSubscribedEvents(): array
 	{
 		return [
-			KernelEvents::VIEW => ['userRegistered', EventPriorities::PRE_WRITE],
+			KernelEvents::VIEW => ['userRegistered', EventPriorities::PRE_WRITE]
 		];
 	}
 
@@ -39,7 +39,7 @@ class UserRegisterSubscriber implements EventSubscriberInterface
 		$user = $event->getControllerResult();
 		$method = $event->getRequest()->getMethod();
 
-		if (!$user instanceof User || !in_array($method, [Request::METHOD_POST, Request::METHOD_PUT])) return;
+		if (!$user instanceof User || !in_array($method, [Request::METHOD_POST])) return;
 
 		// It is an User, we need to hash password here
 		$user->setPassword(

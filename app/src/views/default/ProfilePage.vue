@@ -49,7 +49,10 @@ const nav = computed(() => {
 
 const inputs = reactive({
 	username: '',
-	email: ''
+	email: '',
+	// password: '',
+	// confirmPassword: '',
+	// ...user?.value
 })
 
 const rules = {
@@ -98,12 +101,43 @@ const handleEditProfile = async (payload: any) => {
 
 	try {
 		await auth.editProfile(payload)
+		await store.getProfile()
 		if (!item?.value) return
 		utilsStore.showToast('Profile updated!')
-		// router.push({ name: 'login' })
-		// router.push({ name: 'home' })
 	} catch (err: any) {
 		utilsStore.showToast('Failed to update profile!', 'danger')
+	} finally {
+		utilsStore.setLoading(false)
+	}
+}
+
+// Send request to become a partnered artist
+const partner = async (payload: any) => {
+	utilsStore.setLoading(true)
+
+	try {
+		await auth.editProfile({ ...payload, roles: [...new Set([...item?.value?.roles || [], 'ASK_TO_BECOME_ARTIST'])] })
+		await store.getProfile()
+		if (!item?.value) return
+		utilsStore.showToast('Thanks for partnering!')
+	} catch (err: any) {
+		utilsStore.showToast('Failed to partner!', 'danger')
+	} finally {
+		utilsStore.setLoading(false)
+	}
+}
+
+// Cancel partnership request
+const cancelPartner = async (payload: any) => {
+	utilsStore.setLoading(true)
+
+	try {
+		await auth.editProfile({ ...payload, roles: [...new Set(item?.value?.roles.filter((r: string) => r !== 'ASK_TO_BECOME_ARTIST'))] })
+		await store.getProfile()
+		if (!item?.value) return
+		utilsStore.showToast('Partnership cancelled!')
+	} catch (err: any) {
+		utilsStore.showToast('Failed to cancel partnership!', 'danger')
 	} finally {
 		utilsStore.setLoading(false)
 	}
@@ -116,7 +150,7 @@ onBeforeUnmount(() => store.$reset())
 <template>
 	<v-alert v-if="error || authError" type="error" class="mb-4" v-text="error || authError" closable />
 
-	<Toolbar v-if="$route.name === 'profile'" color="primary-darken-1" :breadcrumb="breadcrumb" :is-loading="authIsLoading" main />
+	<Toolbar v-if="$route.name === 'profile'" color="primary-darken-1" :breadcrumb="breadcrumb" :is-loading="authIsLoading" main :partnered="item?.roles.includes('ASK_TO_BECOME_ARTIST')" @partner="partner(inputs)" @cancel-partner="cancelPartner(inputs)" />
 	<Toolbar v-else color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item?.username ?? '', to: { name: 'artists' }}]" :is-loading="isLoading || authIsLoading" :nav="nav" main @nav="silentPush" />
 
 	<v-tabs v-model="tab" color="primary" fixed-tabs>
@@ -171,6 +205,9 @@ onBeforeUnmount(() => store.$reset())
 		</v-window-item>
 
 		<v-window-item value="1">
+			<!-- Send request to become a partnered artist -->
+			<v-btn text="Become a Partnered Artist" color="primary" class="mb-4" />
+
 			<v-row v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
 				<v-col cols="12" sm="10" order-sm="1">
 					<v-card-title class="font-title">
