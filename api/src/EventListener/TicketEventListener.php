@@ -21,13 +21,6 @@ class TicketEventListener
         if (!$entity instanceof Ticket) {
             return;
         }
-
-     /*   $stripeTicket = $this->stripeService->createTicket($entity->getName(), $entity->getDescription());
-        $entity->setStripeTicketId($stripeTicket->id);
-        $stripePrice = $this->stripeService->createPrice($stripeTicket->id, $entity->getPrice());
-        $entity->setStripePriceId($stripePrice->id);
-        $entityManager = $args->getObjectManager();
-        $entityManager->flush();*/
     }
 
     public function postUpdate(LifecycleEventArgs $args): void
@@ -36,13 +29,6 @@ class TicketEventListener
         if (!$entity instanceof Ticket) {
             return;
         }
-
-    /*    $stripeTicket = $this->stripeService->updateTicket($entity->getStripeTicketId(), $entity->getName(), $entity->getDescription());
-        $entity->setStripeTicketId($stripeTicket->id);
-        $stripePrice = $this->stripeService->updatePrice($entity->getStripePriceId(), $entity->getPrice());
-        $entity->setStripePriceId($stripePrice->id);
-        $entityManager = $args->getObjectManager();
-        $entityManager->flush();*/
     }
 
     public function postRemove(LifecycleEventArgs $args): void
@@ -51,8 +37,5 @@ class TicketEventListener
         if (!$entity instanceof Ticket) {
             return;
         }
-
-      /*  $this->stripeService->deletePrice($entity->getStripePriceId());
-        $this->stripeService->deleteTicket($entity->getStripeTicketId());*/
     }
 }

@@ -10,8 +10,11 @@ use App\Entity\Event;
 use App\Entity\User;
 use App\Enum\TicketStatusEnum;
 use App\Email\Mailer;
+use App\Entity\Booking;
 use App\Entity\Ticket;
 use App\Entity\Transaction;
+use App\Entity\Venue;
+use App\Enum\BookingStatusEnum;
 
 class StripeService
 {
@@ -89,28 +92,18 @@ class StripeService
     {
         //create a ticket with status TicketStatusEnum::CREATE
 
-      /*  $ticket = new Ticket();
-        $ticket->setEvent($event);
-        $ticket->setReference(uniqid());
-        $ticket->setStatus(TicketStatusEnum::CREATE);
-        $ticket->setDay($date);
-        $ticket->setHour($time);
-
-        $this->entityManager->persist($ticket);
-        $this->entityManager->flush();*/
-
 
         //and verify if schedule is available
         $schedule = $event->getSchedules()->filter(function ($schedule) use ($date, $time) {
             return $schedule->getDate() === $date && in_array($time, $schedule->getTimes());
         })->first();
 
-        if(!$schedule){
+        if (!$schedule) {
             throw new \Exception('Schedule not available');
         }
 
         //find the number of place with the state TicketStatusEnum::CREATE with the schedule
-        
+
         $numberTicket = $event->getTickets()->filter(function ($ticket) use ($schedule, $date, $time) {
             return $ticket->getStatus() === TicketStatusEnum::CREATE && $schedule->getDate() === $date && in_array($time, $schedule->getTimes());
         })->count();
@@ -128,7 +121,7 @@ class StripeService
             throw new \Exception('No ticket available');
         }
 
-        $price = $event->getPrice() *100;
+        $price = $event->getPrice() * 100;
 
         $stripe = new \Stripe\StripeClient($this->stripeSK);
 
@@ -159,7 +152,7 @@ class StripeService
         try {
             $stripe = new \Stripe\StripeClient($this->stripeSK);
 
-           
+
             $pi = explode("_secret_", $paymentIntentId)[0];
             $paymentIntent = $stripe->paymentIntents->retrieve(
                 $pi,
@@ -189,6 +182,81 @@ class StripeService
             } else {
                 // Le paiement a échoué, effectuez les actions nécessaires (par exemple, affichez un message d'erreur à l'utilisateur)
             }
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            // Affichez un message d'erreur à l'utilisateur
+
+            $data = [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+
+        return $data;
+    }
+
+
+    public function generatePaymentIntentBooking(Venue $venue, $date, $user, $paymentMethodId)
+    {
+
+        $date = new \DateTime($date);
+
+        $booking = $this->entityManager->getRepository(Booking::class)->findOneBy(['date' => $date, 'venue' => $venue, 'status' => [BookingStatusEnum::PAID, BookingStatusEnum::PENDING, BookingStatusEnum::VALIDATED]]);
+
+        if ($booking) {
+            throw new \Exception('This date is already taken');
+        }
+
+        $price = $venue->getPrice() * 100;
+
+        $stripe = new \Stripe\StripeClient($this->stripeSK);
+
+        $paymentIntent = $stripe->paymentIntents->create([
+            'amount' => $price,
+            'currency' => 'eur',
+            'payment_method_types' => ['card'],
+            'payment_method' => $paymentMethodId,
+        ]);
+        $booking = new Booking();
+        $booking->setDate($date);
+        $booking->setVenue($venue);
+        $booking->setPaymentIntentId($paymentIntent->client_secret);
+        $booking->setClient($user);
+        $this->entityManager->persist($booking);
+
+        $this->entityManager->flush();
+
+        $this->mailer->sendAskBooking($booking);
+
+        return [
+            'status' => 'success',
+            'clientSecret' => $paymentIntent->client_secret,
+        ];
+    }
+
+    public function confirmPaymentBooking($booking)
+    {
+        $data = null;
+        try {
+            $stripe = new \Stripe\StripeClient($this->stripeSK);
+
+            $paymentIntentId = $booking->getPaymentIntentId();
+
+            $pi = explode("_secret_", $paymentIntentId)[0];
+
+            $paymentIntent = $stripe->paymentIntents->retrieve(
+                $pi,
+                []
+            );
+
+            $paymentIntent->confirm([
+                'payment_method' => $paymentIntent->payment_method,
+            ]);
+
+            $booking->setStatus(TicketStatusEnum::PAID);
+
+            $this->entityManager->flush();
+
+            $this->mailer->sendBookingValidated($booking);
         } catch (\Stripe\Exception\ApiErrorException $e) {
             // Affichez un message d'erreur à l'utilisateur
 
