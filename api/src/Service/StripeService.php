@@ -114,7 +114,7 @@ class StripeService
         }
 
         $ticket = $event->getTickets()->filter(function ($ticket) {
-            return $ticket->getStatus() === TicketStatusEnum::CREATE;
+            return $ticket->getStatus() === TicketStatusEnum::CREATE || ($ticket->getStatus() === TicketStatusEnum::PENDING && $ticket->getLastModified()->diff(new \DateTime())->i > 15);
         })->first();
 
         if (!$ticket) {
@@ -134,6 +134,7 @@ class StripeService
         ]);
         $ticket->setPaymentIntentId($paymentIntent->client_secret);
         $ticket->setBuyer($user);
+        $ticket->setLastModified(new \DateTime());
 
         $ticket->setStatus(TicketStatusEnum::PENDING);
         $this->entityManager->flush();
@@ -200,10 +201,17 @@ class StripeService
 
         $date = new \DateTime($date);
 
-        $booking = $this->entityManager->getRepository(Booking::class)->findOneBy(['date' => $date, 'venue' => $venue, 'status' => [BookingStatusEnum::PAID, BookingStatusEnum::PENDING, BookingStatusEnum::VALIDATED]]);
+        $bookingValid = $this->entityManager->getRepository(Booking::class)->findOneBy(['date' => $date, 'venue' => $venue, 'status' => [BookingStatusEnum::PAID, BookingStatusEnum::PENDING, BookingStatusEnum::VALIDATED]]);
+        $bookingPending = $this->entityManager->getRepository(Booking::class)->findOneBy(['date' => $date, 'venue' => $venue, 'status' => [BookingStatusEnum::PENDING]]);
 
-        if ($booking) {
+
+        if ($bookingValid) {
             throw new \Exception('This date is already taken');
+        }
+        if ($bookingPending) {
+            if ($bookingPending->getStatus() === BookingStatusEnum::PENDING && $bookingPending->getLastModified()->diff(new \DateTime())->i < 15) {
+                throw new \Exception('This date is already taken');
+            }
         }
 
         $price = $venue->getPrice() * 100;
@@ -221,6 +229,7 @@ class StripeService
         $booking->setVenue($venue);
         $booking->setPaymentIntentId($paymentIntent->client_secret);
         $booking->setClient($user);
+        $booking->setLastModified(new \DateTime());
         $this->entityManager->persist($booking);
 
         $this->entityManager->flush();

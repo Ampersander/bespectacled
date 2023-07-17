@@ -6,7 +6,7 @@
     </StripeElements>
   </template>
   <v-list-item link prepend-icon="fa fa-ticket" @click="pay" :disabled="!isConnected">
-    <v-list-item-title>Buy Ticket {{ price }}
+    <v-list-item-title>Make a reservation {{ price }}
       <i class="fa fa-dollar v-icon notranslate v-theme--dark v-icon--size-default text-yellow"
         aria-hidden="true"></i></v-list-item-title>
   </v-list-item>
@@ -24,6 +24,7 @@ import { STRIPE_PK } from "../../utils/config";
 import { storeToRefs } from 'pinia'
 import { useAuthStore, useUtilsStore } from '@/store'
 import { computed } from 'vue';
+import { useRouter } from 'vue-router'
 
 export default defineComponent({
   name: 'StripeElementPaymentBooking',
@@ -41,6 +42,7 @@ export default defineComponent({
   setup(props) {
     const store = useAuthStore()
     const { user } = storeToRefs(store)
+    const router = useRouter()
 
     const isConnected = computed(() =>
       user?.value ? true : false
@@ -94,10 +96,27 @@ export default defineComponent({
           price: price.value,
         }
 
-        PaymentService.generatePaymentIntentBooking( data ).then((res: any) => {
+        PaymentService.generatePaymentIntentBooking(data).then((res: any) => {
           console.log(res);
+          if (res.status === 500) {
+            utilsStore.showToast(res.detail, 'danger')
+          } else {
+            utilsStore.showToast('Reservation successful!')
+            setTimeout(() => {
+              setTimeout(() => { router.replace('/') }, 2000)
+            }, 2000);
+          }
         }).catch((err: any) => {
-          console.log(err);
+          if (err.response) {
+            // Access the error response from the API
+            const errorResponse = err.response.data;
+            console.log(errorResponse);
+            utilsStore.showToast(errorResponse.detail, 'danger');
+          } else {
+            // Handle other types of errors
+            console.log(err);
+            utilsStore.showToast('An error occurred during the reservation.', 'danger');
+          }
         })
 
       });
