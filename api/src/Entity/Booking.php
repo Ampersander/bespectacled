@@ -19,30 +19,31 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Booking
 {
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
+    #[Groups(['booking:read', 'user:read', 'transaction:read'])]
     private ?int $id = null;
 
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::INTEGER)]
-    #[Groups(['booking:read', 'booking:write', 'user:read', 'venue:read', 'transaction:read'])]
+    #[Groups(['booking:read', 'booking:write', 'user:read', 'transaction:read'])]
     private int $status = BookingStatusEnum::PENDING;
 
     #[Assert\NotBlank]
-    #[Groups(['booking:read', 'booking:write'])]
+    #[Groups(['booking:read', 'booking:write', 'transaction:read'])]
     #[ORM\ManyToOne(inversedBy: 'bookings'), ORM\JoinColumn(nullable: false)]
     private ?User $client = null;
 
     #[Assert\NotBlank]
-    #[Groups(['booking:read', 'booking:write'])]
+    #[Groups(['booking:read', 'booking:write', 'user:read', 'transaction:read'])]
     #[ORM\ManyToOne(inversedBy: 'bookings'), ORM\JoinColumn(nullable: false)]
     private ?Venue $venue = null;
 
-    #[Groups(['booking:read', 'booking:write'])]
+    #[Groups(['booking:read', 'booking:write', 'user:read'])]
     #[ORM\ManyToOne(inversedBy: 'bookings'), ORM\JoinColumn(nullable: true)]
     private ?Transaction $transaction = null;
 
     //add date
     #[Assert\NotBlank]
-    #[Groups(['booking:read', 'booking:write'])]
+    #[Groups(['booking:read', 'booking:write', 'user:read', 'transaction:read'])]
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $date = null;
 
@@ -52,7 +53,7 @@ class Booking
     private ?string $paymentIntentId = null;
 
     //add lastModified
-    #[Groups(['booking:read', 'booking:write'])]
+    #[Groups(['booking:read', 'booking:write', 'user:read', 'transaction:read'])]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastModified = null;
 

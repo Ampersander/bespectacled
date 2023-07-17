@@ -60,13 +60,12 @@ const rules = {
 	email: { required, email, maxLength: maxLength(50) }
 }
 
-const tabs = [
+const tabs = computed(() => [
 	{ text: 'general', 'prepend-icon': 'fa fa-info', if: route.name === 'profile' },
-	// { text: 'events', 'prepend-icon': 'fa fa-star', if: true },
-	{ text: 'events', 'prepend-icon': 'fa fa-star', if: true },
-	// { text: 'tickets', 'prepend-icon': 'fa fa-ticket', if: true },
-	{ text: 'tickets', 'prepend-icon': 'fa fa-ticket', if: route.name === 'profile' }
-]
+	{ text: 'events (' + (item?.value?.events?.length || 0) + ')', 'prepend-icon': 'fa fa-star', if: true },
+	{ text: 'tickets (' + (item?.value?.tickets?.length || 0) + ')', 'prepend-icon': 'fa fa-ticket', if: route.name === 'profile' },
+	{ text: 'bookings (' + (item?.value?.bookings?.length || 0) + ')', 'prepend-icon': 'fa fa-fa-calendar-check', if: route.name === 'profile' }
+])
 
 const formats: Record<string, Intl.DateTimeFormatOptions> = {
 	weekday: { weekday: 'long' },
@@ -258,7 +257,7 @@ onBeforeUnmount(() => store.$reset())
 
 						<span class="float-end text-overline text-muted">
 							<!-- {{ new Date(ticket.day + 'T' + ticket.hour).toLocaleDateString() }} -->
-							{{ (new Date(ticket.day)).toLocaleDateString($vuetify.locale.current, formats.long) }} at {{ ticket.hour }}
+							Available for {{ (new Date(ticket.day)).toLocaleDateString($vuetify.locale.current, formats.long) }} at {{ ticket.hour }}
 						</span>
 					</v-card-title>
 
@@ -269,6 +268,30 @@ onBeforeUnmount(() => store.$reset())
 
 				<v-col cols="12" sm="2">
 					<v-img :src="ticket.event.src || 'https://fakeimg.pl/260/7750f8/FFF/?text=No%20Image&font=lobster&font_size=50'" :alt="ticket.event.title" />
+				</v-col>
+			</v-row>
+		</v-window-item>
+
+		<v-window-item value="3">
+			<v-row v-if="tabs[3].if" v-for="booking, i in item.bookings" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
+				<v-col cols="12" sm="10" order-sm="1">
+					<v-card-title class="font-title">
+						<router-link v-if="booking.id" :to="{ name: 'venue', params: { id: booking.venue.id }}">
+							{{ booking.venue.name }}
+						</router-link>
+
+						<span class="float-end text-overline text-muted">
+							Booked for {{ (new Date(booking.date)).toLocaleDateString($vuetify.locale.current, formats.long) }}
+						</span>
+					</v-card-title>
+
+					<v-card-subtitle v-text="'Last modified: ' + (new Date(booking.lastModified)).toLocaleDateString($vuetify.locale.current, formats.long)" />
+
+					<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm" v-html="DOMPurify.sanitize(marked(booking.venue.description, { mangle: false, headerIds: false }))" />
+				</v-col>
+
+				<v-col cols="12" sm="2">
+					<v-img :src="booking.venue.src || 'https://fakeimg.pl/260/7750f8/FFF/?text=No%20Image&font=lobster&font_size=50'" :alt="booking.venue.name" />
 				</v-col>
 			</v-row>
 		</v-window-item>

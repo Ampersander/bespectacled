@@ -4,10 +4,10 @@ import type { Venue } from './venue'
 import type { Transaction } from './transaction'
 
 export interface Booking extends Item {
-	status: number
-	createdAt: string
-	updatedAt: string
+	date: Date
 	venue: Venue
-	user: User
+	client: User
+	status: number
+	lastModified: Date
 	transaction: Transaction
 }

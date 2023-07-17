@@ -40,50 +40,51 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 class Venue
 {
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
-    #[Groups(['venue:read', 'event:read'])]
+    #[Groups(['venue:read', 'event:read', 'user:read', 'booking:read'])]
     private ?int $id = null;
 
     #[Gedmo\Slug(fields: ['name'])]
     #[ORM\Column(length: 128, unique: true)]
+    #[Groups(['venue:read', 'venue:write', 'event:read', 'user:read', 'booking:read'])]
     private ?string $slug = null;
 
     #[ORM\Column]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
-    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    #[Groups(['venue:read', 'venue:write', 'event:read', 'user:read', 'booking:read'])]
     private ?string $name = null;
 
     #[ORM\Column]
     #[Assert\NotBlank]
-    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    #[Groups(['venue:read', 'venue:write', 'event:read', 'user:read', 'booking:read'])]
     private ?string $type = null;
 
     #[ORM\Column]
     #[Assert\NotBlank, Assert\Positive]
-    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    #[Groups(['venue:read', 'venue:write', 'event:read', 'user:read', 'booking:read'])]
     private ?float $price = null;
 
     #[ORM\Column(type: 'text')]
-    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    #[Groups(['venue:read', 'venue:write', 'event:read', 'user:read', 'booking:read'])]
     private ?string $description = null;
 
     #[ORM\Column]
     #[Assert\NotBlank]
     #[Assert\Range(min: 1, max: 300)]
-    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    #[Groups(['venue:read', 'venue:write', 'event:read', 'user:read', 'booking:read'])]
     private ?int $seats = null;
 
     #[ORM\Column]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
-    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    #[Groups(['venue:read', 'venue:write', 'event:read', 'user:read', 'booking:read'])]
     private ?string $location = null;
 
     #[ORM\Column]
-    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    #[Groups(['venue:read', 'venue:write', 'event:read', 'user:read', 'booking:read'])]
     private ?string $src = null;
 
-    #[Groups(['venue:read'])]
+    #[Groups(['venue:read', 'venue:write', 'booking:read'])]
     #[ORM\OneToMany(mappedBy: 'venue', targetEntity: Event::class)]
     private Collection $events;
 
