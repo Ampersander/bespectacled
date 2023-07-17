@@ -63,7 +63,7 @@ const rules = {
 const tabs = computed(() => [
 	{ text: 'general', 'prepend-icon': 'fa fa-info', if: route.name === 'profile' },
 	{ text: 'events (' + (item?.value?.events?.length || 0) + ')', 'prepend-icon': 'fa fa-star', if: true },
-	{ text: 'tickets (' + (item?.value?.tickets?.length || 0) + ')', 'prepend-icon': 'fa fa-ticket', if: route.name === 'profile' },
+	{ text: 'tickets (' + (item?.value?.tickets?.filter(_ => _.status > 0)?.length || 0) + ')', 'prepend-icon': 'fa fa-ticket', if: route.name === 'profile' },
 	{ text: 'bookings (' + (item?.value?.bookings?.length || 0) + ')', 'prepend-icon': 'fa fa-fa-calendar-check', if: route.name === 'profile' }
 ])
 
@@ -261,7 +261,14 @@ onBeforeUnmount(() => store.$reset())
 						</span>
 					</v-card-title>
 
-					<v-card-subtitle v-text="'Reference: ' + ticket.reference" />
+					<v-card-subtitle>
+						<v-chip>
+							{{ ticket.status === 1 ? 'Paid' : '' }}
+							{{ ticket.status === 2 ? 'Cancelled' : '' }}
+						</v-chip>
+
+						Reference: {{ ticket.reference }}
+					</v-card-subtitle>
 
 					<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm" v-html="DOMPurify.sanitize(marked(ticket.event.description, { mangle: false, headerIds: false }))" />
 				</v-col>
@@ -285,7 +292,16 @@ onBeforeUnmount(() => store.$reset())
 						</span>
 					</v-card-title>
 
-					<v-card-subtitle v-text="'Last modified: ' + (new Date(booking.lastModified)).toLocaleDateString($vuetify.locale.current, formats.long)" />
+					<v-card-subtitle>
+						<v-chip>
+							{{ booking.status === 0 ? 'Pending' : '' }}
+							{{ booking.status === 1 ? 'Paid' : '' }}
+							{{ booking.status === 2 ? 'Cancelled' : '' }}
+							{{ booking.status === 3 ? 'Validated' : '' }}
+						</v-chip>
+
+						Last modified: {{ (new Date(booking.lastModified)).toLocaleDateString($vuetify.locale.current, formats.long) }}
+					</v-card-subtitle>
 
 					<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm" v-html="DOMPurify.sanitize(marked(booking.venue.description, { mangle: false, headerIds: false }))" />
 				</v-col>

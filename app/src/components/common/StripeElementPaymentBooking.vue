@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import { loadStripe } from '@stripe/stripe-js'
 import { StripeElements, StripeElement } from 'vue-stripe-js'
 
-import { STRIPE_PK } from '../../utils/config'
+import { STRIPE_PK } from '@/utils/config'
 import { useAuthStore, useUtilsStore } from '@/store'
 import PaymentService from '@/services/payment.service'
 
@@ -22,29 +22,23 @@ export default defineComponent({
 	},
 	setup(props) {
 		const router = useRouter()
+		const utilsStore = useUtilsStore()
 
 		const store = useAuthStore()
 		const { user } = storeToRefs(store)
 
-		const isConnected = computed(() => (user?.value ? true : false))
-		const stripeKey = ref(STRIPE_PK) // Votre clé d'API Stripe de test
-		const instanceOptions = ref({
-			// Options d'instance Stripe (le cas échéant)
-		})
-		const elementsOptions = ref({
-			// clientSecret: ''
-		})
-		const cardOptions = ref({
-			// Options de l'élément de carte Stripe
-		})
-		const stripeLoaded = ref(false)
 		const card = ref()
 		const elms = ref()
-		const venueId = ref(props.venueId)
+		const cardOptions = ref({}) // Options de l'élément de carte Stripe
+		const clientSecret = ref('')
 		const date = ref(props.date)
 		const price = ref(props.price)
-		const clientSecret = ref("")
-		const utilsStore = useUtilsStore()
+		const stripeLoaded = ref(false)
+		const elementsOptions = ref({}) // { clientSecret: '' }
+		const instanceOptions = ref({}) // Options d'instance Stripe (le cas échéant)
+		const stripeKey = ref(STRIPE_PK) // Votre clé d'API Stripe de test
+		const venueId = ref(props.venueId)
+		const isConnected = computed(() => (user?.value ? true : false))
 
 		console.log(date)
 
@@ -60,24 +54,16 @@ export default defineComponent({
 				.then((res: any) => {
 					console.log(res)
 
-					let data = {
-						paymentMethodId: res.paymentMethod.id,
-						venueId: venueId.value,
-						date: date.value,
-						price: price.value,
-					}
+					let data = { date: date.value, price: price.value, venueId: venueId.value, paymentMethodId: res.paymentMethod.id }
 
 					PaymentService.generatePaymentIntentBooking(data)
 						.then((res: any) => {
 							console.log(res)
+
 							if (res.status === 500) utilsStore.showToast(res.detail, 'danger')
 							else {
-								utilsStore.showToast('Reservation successful!')
-
-								// TODO remove double timeout
-								setTimeout(() => {
-									setTimeout(() => { router.replace('/') }, 2000)
-								}, 2000)
+								utilsStore.showToast('Booking successful!')
+								setTimeout(() => { router.replace('/profile') }, 2000)
 							}
 						})
 						.catch((err: any) => {
@@ -99,15 +85,15 @@ export default defineComponent({
 		}
 
 		return {
-			stripeKey,
-			stripeLoaded,
-			isConnected,
-			instanceOptions,
-			elementsOptions,
-			cardOptions,
+			pay,
 			card,
 			elms,
-			pay
+			stripeKey,
+			cardOptions,
+			isConnected,
+			stripeLoaded,
+			elementsOptions,
+			instanceOptions
 		}
 	}
 })
@@ -115,18 +101,18 @@ export default defineComponent({
 
 <template>
 	<template v-if="isConnected">
-		<StripeElements v-if="stripeLoaded" #="{ elements, instance }" ref="elms" :stripe-key="stripeKey" :instance-options="instanceOptions" :elements-options="elementsOptions">
+		<StripeElements v-if="stripeLoaded" #="{ elements, instance }" ref="elms" :stripe-key="stripeKey" :elements-options="elementsOptions" :instance-options="instanceOptions">
 			<StripeElement ref="card" :elements="elements" :options="cardOptions" />
 		</StripeElements>
 	</template>
 
-	<v-btn class="mt-4" :disabled="!isConnected" prepend-icon="fa fa-ticket" link @click="pay">
-		Book this venue for
+	<v-btn class="mt-4" prepend-icon="fa fa-ticket" :disabled="!isConnected" link @click="pay">
+		Book Venue for
 		<v-icon class="fa fa-dollar text-yellow" />
 		{{ price }}
 	</v-btn>
 
 	<template v-if="!isConnected">
-		You need to be connected to book a venue
+		You need to be logged in to book a venue.
 	</template>
 </template>

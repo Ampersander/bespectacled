@@ -45,8 +45,7 @@ const formats: Record<string, Intl.DateTimeFormatOptions> = {
 		<v-card-item>
 			<v-card-title v-text="event.title" />
 
-			<v-menu v-if="event.venue" v-model="menus.venue" location="top start" origin="top start"
-				transition="scale-transition">
+			<v-menu v-if="event.venue" v-model="menus.venue" location="top start" origin="top start" transition="scale-transition">
 				<template #activator="{ props }">
 					<v-chip v-bind="props" link pill>
 						<v-avatar :image="event.venue.src" icon="fa fa-location-dot" start />
@@ -57,8 +56,7 @@ const formats: Record<string, Intl.DateTimeFormatOptions> = {
 
 				<v-card width="max-content">
 					<v-list bg-color="black">
-						<v-list-item :title="event.venue?.name" :subtitle="`Rentable for $${event.venue.price} per day`"
-							:prepend-avatar="event.venue.src">
+						<v-list-item :prepend-avatar="event.venue.src" :title="event.venue?.name" :subtitle="`Rentable for $${event.venue.price} per day`">
 							<template #append>
 								<v-list-item-action>
 									<v-btn variant="text" icon @click="menus.venue = false">
@@ -70,12 +68,9 @@ const formats: Record<string, Intl.DateTimeFormatOptions> = {
 					</v-list>
 
 					<v-list>
-						<v-list-item link prepend-icon="fa fa-circle-info" title="View Venue Details"
-							@click="() => $router.push({ name: 'venue', params: { id: event.venue?.id } })" />
-						<v-list-item link prepend-icon="fa fa-calendar-days" title="Check Available Times"
-							@click="() => $router.push({ name: 'calendar', query: { venue: event.venue?.id } })" />
-						<!--<v-list-item link prepend-icon="fa fa-ticket" title="Book Venue"
-							@click="() => $router.push({ name: 'booking', query: { venue: event.venue?.id } })" />-->
+						<v-list-item prepend-icon="fa fa-circle-info" title="View Venue Details" link @click="() => $router.push({ name: 'venue', params: { id: event.venue?.id } })" />
+						<v-list-item prepend-icon="fa fa-calendar-days" title="Check Available Times" link @click="() => $router.push({ name: 'calendar', query: { venue: event.venue?.id } })" />
+						<!--<v-list-item prepend-icon="fa fa-ticket" title="Book Venue" link @click="() => $router.push({ name: 'booking', query: { venue: event.venue?.id } })" />-->
 					</v-list>
 				</v-card>
 			</v-menu>
@@ -116,17 +111,12 @@ const formats: Record<string, Intl.DateTimeFormatOptions> = {
 				<v-menu v-for="(day, i) in event.schedules" :key="i" v-model="menus.days[i]" location="top start"
 					origin="top start" transition="scale-transition" :disabled="Date.now() > new Date(day.date).getTime()">
 					<template #activator="{ props }">
-						<v-chip v-bind="props" :disabled="Date.now() > new Date(day.date).getTime()"
-							:text="new Date(day.date).toLocaleDateString($vuetify.locale.current, formats.short)" link
-							pill />
+						<v-chip v-bind="props" :disabled="Date.now() > new Date(day.date).getTime()" :text="new Date(day.date).toLocaleDateString($vuetify.locale.current, formats.short)" link pill />
 					</template>
 
 					<v-card width="max-content">
 						<v-list bg-color="black">
-							<v-list-item
-								:title="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, formats.long)"
-								:subtitle="day.times.length + (day.times.length === 1 ? ` time` : ' times') + ' available'"
-								prepend-icon="fa fa-calendar">
+							<v-list-item prepend-icon="fa fa-calendar" :title="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, formats.long)" :subtitle="day.times.length + (day.times.length === 1 ? ` time` : ' times') + ' available'" >
 								<template #append>
 									<v-list-item-action>
 										<v-btn icon="fa fa-times-circle" variant="text" @click="menus.days[i] = false" />
@@ -137,37 +127,31 @@ const formats: Record<string, Intl.DateTimeFormatOptions> = {
 
 						<v-card-text>
 							<v-chip-group>
-								<v-menu v-for="(time, i) in day.times" :key="i" v-model="menus.times[day.date + 'T' + time]"
-									location="top start" origin="top start" transition="scale-transition"
-									:disabled="Date.now() > new Date(day.date + 'T' + time).getTime()">
+								<v-menu v-for="(time, i) in day.times" :key="i" v-model="menus.times[day.date + 'T' + time]" :disabled="Date.now() > new Date(day.date + 'T' + time).getTime()" location="bottom start" origin="bottom start" transition="scale-transition">
 									<template #activator="{ props }">
-										<v-chip v-bind="props" pill link :text="time"
-											:disabled="Date.now() > new Date(day.date + 'T' + time).getTime()" />
+										<v-chip v-bind="props" :disabled="Date.now() > new Date(day.date + 'T' + time).getTime()" :text="time" link pill />
 									</template>
 
 									<v-card width="max-content">
 										<v-list bg-color="black">
-											<v-list-item :title="time"
-												:subtitle="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, formats.long)"
-												prepend-icon="fa fa-clock">
+											<v-list-item :title="time" prepend-icon="fa fa-clock" :subtitle="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, formats.long)">
 												<template #append>
 													<v-list-item-action>
-														<v-btn icon="fa fa-times-circle" variant="text"
-															@click="menus.times[day.date + 'T' + time] = false" />
+														<v-btn icon="fa fa-times-circle" variant="text" @click="menus.times[day.date + 'T' + time] = false" />
 													</v-list-item-action>
 												</template>
 											</v-list-item>
 										</v-list>
 
-										<v-list>
-											<StripeElementPayment :eventId="event['id']" :date="day.date" :time="time" :price="event['price']" />
-										</v-list>
-
+										<v-sheet theme="light">
+											<v-card-text>
+												<StripeElementPayment :eventId="event['id']" :date="day.date" :time="time" :price="event['price']" />
+											</v-card-text>
+										</v-sheet>
 									</v-card>
 								</v-menu>
 							</v-chip-group>
 						</v-card-text>
-
 					</v-card>
 				</v-menu>
 			</v-chip-group>

@@ -227,7 +227,7 @@ const submitForm = () => {
 							</v-col>
 
 							<v-col v-if="submit" cols="12">
-								<v-sheet class="" theme="light">
+								<v-sheet theme="light">
 									<v-card-text>
 										<StripeElementPaymentBooking v-if="submit" :venueId="item.id" :date="options.date" :price="item.price" />
 									</v-card-text>
