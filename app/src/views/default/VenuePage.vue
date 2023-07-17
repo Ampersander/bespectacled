@@ -4,8 +4,9 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import { useRoute, useRouter } from 'vue-router'
 import { DatePicker } from 'v-calendar'
+import { useRoute, useRouter } from 'vue-router'
+import { AttributeConfig, PopoverConfig } from 'v-calendar/dist/types/src/utils/attribute'
 
 import { Venue } from '@/types/venue'
 import Toolbar from '@/components/common/Toolbar.vue'
@@ -13,8 +14,6 @@ import { useBreadcrumb } from '@/composables/breadcrumb'
 import { useMercureItem } from '@/composables/mercureItem'
 import { useVenueDeleteStore, useVenueListStore, useVenueShowStore } from '@/store'
 import StripeElementPaymentBooking from '@/components/common/StripeElementPaymentBooking.vue'
-import { AttributeConfig, PopoverConfig } from 'v-calendar/dist/types/src/utils/attribute'
-import { Schedule } from '@/types/schedule'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -29,23 +28,24 @@ const { items } = storeToRefs(venueListStore)
 
 const store = useVenueShowStore()
 const { retrieved: item, isLoading, error } = storeToRefs(store)
-const data = ref<(Partial<AttributeConfig> & { customData: { day: Schedule, event: Event } })[]>([])
-const query = router.currentRoute.value.query
+
+// Disable dates before today and today
+const disabledDates = ref([{ start: null, end: new Date() }])
 const options = reactive({
 	rows: 1,
 	columns: 1,
-	date: null,
+	date: undefined,
 	masks: {
 		// input: 'MMM D'
 		input: 'YYYY-MM-DD',
 	}
 })
 
-const attr: (label?: PopoverConfig['label'], visibility?: PopoverConfig['visibility']) => { popover: PopoverConfig } = (label = '', visibility = 'hover') => ({
+const attr: (label?: PopoverConfig['label'], visibility?: PopoverConfig['visibility']) => { popover: PopoverConfig } = (label = '', visibility = 'click') => ({
 	popover: {
 		label,
 		visibility,
-		placement: 'auto',
+		placement: 'top-end',
 		hideIndicator: true,
 		isInteractive: true
 	}
@@ -65,8 +65,15 @@ const nav = computed(() => {
 
 const general: (keyof Venue)[] = ['name', 'type', 'price', 'seats', 'location']
 const tabs = [
-	{ text: 'events', 'prepend-icon': 'fa fa-star' }
+	{ text: 'events', 'prepend-icon': 'fa fa-star' },
+	{ text: 'booking', 'prepend-icon': 'fa fa-calendar-alt' }
 ]
+
+const formats: Record<string, Intl.DateTimeFormatOptions> = {
+	weekday: { weekday: 'long' },
+	short: { month: 'short', day: 'numeric' },
+	long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+}
 
 const icons: Record<string, string> = {
 	broadway: 'fa fa-mask',
@@ -88,20 +95,16 @@ const silentPush = async (id: string) => {
 
 onBeforeUnmount(() => store.$reset())
 
-const submit = ref(false);
-
-const newBooking = ref({
-	date: undefined,
-});
+const submit = ref(false)
 
 const submitForm = () => {
 	// Handle form submission here
-	console.log('Submitted:', newBooking.value);
+	console.log('Submitted:', options.date)
 	// Reset form fields
-	//newBooking.value.date = undefined;
-	console.log(newBooking.value.date);
-	submit.value = true;
-};
+	// options.date = undefined
+	console.log(options.date)
+	submit.value = true
+}
 </script>
 
 <template>
@@ -113,7 +116,7 @@ const submitForm = () => {
 				min-height="268" data-simplebar>
 				<v-card-title class="my-2" v-text="item.name" />
 
-				<v-img v-if="typeof item.src === 'string'" class="card-bg" :src="item.src" cover />
+				<v-img class="card-bg" :src="item.src || 'https://fakeimg.pl/260/7750f8/FFF/?text=No%20Image&font=lobster&font_size=50'" cover />
 
 				<v-card-title v-text="'Information'" />
 
@@ -130,9 +133,7 @@ const submitForm = () => {
 
 		<v-col cols="12" sm="9">
 			<v-sheet rounded="lg">
-				<Toolbar color="primary-darken-1"
-					:breadcrumb="[...breadcrumb, { title: item.name ?? '', to: { name: 'venues' } }]"
-					:is-loading="isLoading" :nav="nav" main @nav="silentPush" />
+				<Toolbar color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item.name ?? '', to: { name: 'venues' } }]" :is-loading="isLoading" :nav="nav" main @nav="silentPush" />
 
 				<v-card-text v-html="output" />
 
@@ -142,8 +143,7 @@ const submitForm = () => {
 
 				<v-window v-model="tab" class="bg-surface-darken-1">
 					<v-window-item value="0">
-						<v-row v-for="event, i in item.events" :key="i" class="bg-surface-darken-1"
-							style="min-height: 11em;">
+						<v-row v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
 							<v-col cols="12" sm="10" order-sm="1">
 								<v-card-title class="font-title">
 									<router-link v-if="item.id" :to="{ name: 'event', params: { id: event.id } }">
@@ -156,52 +156,93 @@ const submitForm = () => {
 									</span>
 								</v-card-title>
 
-								<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm"
-									v-html="DOMPurify.sanitize(marked(event.description || '<i>Nothing here yet...</i>', { mangle: false, headerIds: false }))" />
+								<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm" v-html="DOMPurify.sanitize(marked(event.description || '<i>Nothing here yet...</i>', { mangle: false, headerIds: false }))" />
 							</v-col>
 
 							<v-col cols="12" sm="2">
-								<v-img :src="event.src" :alt="event.title" />
+								<v-img :src="event.src || 'https://fakeimg.pl/260/7750f8/FFF/?text=No%20Image&font=lobster&font_size=50'" :alt="event.title" />
+							</v-col>
+						</v-row>
+					</v-window-item>
+
+					<v-window-item value="1">
+						<v-row class="bg-surface-darken-1" style="min-height: 11em;">
+							<v-col cols="12">
+								<v-card-title class="font-title">
+									Book this venue now
+
+									<span v-if="options.date" class="float-end text-overline text-muted">
+										<!-- format -->
+										{{ (new Date(options.date)).toLocaleDateString($vuetify.locale.current, formats.long) }}
+										<v-icon icon="fa fa-calendar-day" size="md" />
+									</span>
+								</v-card-title>
+
+								<v-card-subtitle>
+									<v-icon icon="fa fa-map-marker-alt" size="md" />
+									{{ item.location }}
+								</v-card-subtitle>
+
+								<v-card-text v-if="!submit" class="mb-4 pb-0">
+									<v-form @submit.prevent="submitForm" v-if="!submit">
+										<DatePicker
+											v-model="options.date"
+											class="bg-surface"
+											mode="date"
+											color="purple"
+											:masks="options.masks"
+											:popover="attr().popover"
+											:disabled-dates="disabledDates"
+											:is-dark="$vuetify.theme.current.dark"
+											:select-attribute="(attr() as AttributeConfig)"
+											is-required
+											@drag="options.date = $event"
+										>
+											<template v-if="options.date" #day-popover="{ format }">
+												{{ format(options.date, 'MMM D') }} }}
+											</template>
+
+											<template #="{ inputValue, inputEvents, updateValue }">
+												<v-text-field
+													:value="inputValue"
+													prepend-inner-icon="fa fa-calendar-day"
+													label="Date"
+													readonly
+													type="date"
+													clearable
+													hide-details
+													@="inputEvents"
+													@click:clear="updateValue(undefined)"
+												/>
+											</template>
+										</DatePicker>
+
+										<!-- <vc-date-picker v-model="options.date" label="Date" required></vc-date-picker> -->
+
+										<v-card-actions>
+											<v-btn :disabled="!options.date" type="submit" color="primary" :text="submit ? 'Confirm' : 'Book the venue'" />
+										</v-card-actions>
+									</v-form>
+								</v-card-text>
+							</v-col>
+
+							<v-col v-if="submit" cols="12">
+								<v-sheet class="" theme="light">
+									<v-card-text>
+										<StripeElementPaymentBooking v-if="submit" :venueId="item.id" :date="options.date" :price="item.price" />
+									</v-card-text>
+								</v-sheet>
 							</v-col>
 						</v-row>
 					</v-window-item>
 				</v-window>
-				<v-form @submit.prevent="submitForm" v-if="!submit">
-					<v-card-title class="font-title">Book now this venue</v-card-title>
-
-					<v-row>
-						<v-col cols="12" sm="6">
-							<DatePicker
-								v-model="options.date"
-								class="bg-surface"
-								mode="date"
-								color="purple"
-								:masks="options.masks"
-								:drag-attribute="(attr() as AttributeConfig)"
-								:select-attribute="(attr() as AttributeConfig)"
-								:is-dark="$vuetify.theme.current.dark"
-								@drag="options.date = $event"
-							>
-								
-
-								<template #="{ inputValue, inputEvents, isDragging, updateValue }">
-										
-										
-									
-								</template>
-							</DatePicker>
-							<vc-date-picker v-model="newBooking.date" label="Date" required></vc-date-picker>
-						</v-col>
-					</v-row>
-
-					<v-card-actions>
-						<v-btn type="submit" color="primary">Book the venue</v-btn>
-					</v-card-actions>
-				</v-form>
-					
-				<StripeElementPaymentBooking :venueId="item.id" :date="newBooking.date" :price="item.price" v-if="submit"/>
 			</v-sheet>
-
 		</v-col>
 	</v-row>
 </template>
+
+<style>
+.vc-popover-content-wrapper.is-interactive {
+	position: fixed !important;
+}
+</style>

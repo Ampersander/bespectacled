@@ -193,9 +193,9 @@ watch([events, schedule], () => {
 								mode="date"
 								color="purple"
 								:masks="options.masks"
+								:is-dark="$vuetify.theme.current.dark"
 								:drag-attribute="(attr() as AttributeConfig)"
 								:select-attribute="(attr() as AttributeConfig)"
-								:is-dark="$vuetify.theme.current.dark"
 								@drag="options.range = $event"
 							>
 								<template v-if="options.range?.start && options.range?.end" #day-popover="{ format }">
@@ -284,7 +284,7 @@ watch([events, schedule], () => {
 
 													<v-list>
 														<StripeElementPayment :eventId="attr.customData.event['id']" :date="day.date" :time="time" :price="attr.customData.event['price']" />
-														
+
 													</v-list>
 												</v-card>
 											</v-menu>
@@ -293,8 +293,6 @@ watch([events, schedule], () => {
 
 									<v-card-actions>
 										<v-btn color="secondary" @click="() => router.push({ name: 'event', params: { id: attr.customData.event.id } })">View Event Details</v-btn>
-										<v-spacer></v-spacer>
-										
 									</v-card-actions>
 								</v-card>
 							</v-window-item>
