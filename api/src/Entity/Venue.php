@@ -69,6 +69,7 @@ class Venue
 
     #[ORM\Column]
     #[Assert\NotBlank]
+    #[Assert\Range(min: 1, max: 300)]
     #[Groups(['venue:read', 'venue:write', 'event:read'])]
     private ?int $seats = null;
 

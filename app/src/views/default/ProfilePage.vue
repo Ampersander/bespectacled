@@ -32,9 +32,9 @@ const { items } = storeToRefs(userListStore)
 const store = useUserShowStore()
 const { retrieved: item, isLoading, error } = storeToRefs(store)
 
-const tab = ref(0)
 const valid = ref(true)
 const showPassword = ref(false)
+const tab = ref(route.name === 'profile' ? 0 : 1)
 const form = ref<null | typeof import('vuetify/components')['VForm']>(null)
 // const output = computed(() => DOMPurify.sanitize(marked(item?.value?.description || '<i class="text-muted">Nothing here yet...</i>', { mangle: false, headerIds: false })))
 
@@ -61,12 +61,20 @@ const rules = {
 }
 
 const tabs = [
-	{ text: 'general', 'prepend-icon': 'fa fa-info' },
-	{ text: 'events', 'prepend-icon': 'fa fa-star' },
-	{ text: 'tickets', 'prepend-icon': 'fa fa-ticket' }
+	{ text: 'general', 'prepend-icon': 'fa fa-info', if: route.name === 'profile' },
+	// { text: 'events', 'prepend-icon': 'fa fa-star', if: true },
+	{ text: 'events', 'prepend-icon': 'fa fa-star', if: true },
+	// { text: 'tickets', 'prepend-icon': 'fa fa-ticket', if: true },
+	{ text: 'tickets', 'prepend-icon': 'fa fa-ticket', if: route.name === 'profile' }
 ]
 
-if (route.name !== 'profile') tabs.shift()
+const formats: Record<string, Intl.DateTimeFormatOptions> = {
+	weekday: { weekday: 'long' },
+	short: { month: 'short', day: 'numeric' },
+	long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+}
+
+// if (route.name !== 'profile') tabs.shift()
 
 const icons: Record<string, string> = {
 	broadway: 'fa fa-mask',
@@ -85,6 +93,10 @@ if (router.currentRoute.value.name === 'profile') {
 	inputs.email = user?.value?.email ?? ''
 } else if (router.currentRoute.value.name === 'artist' && route.params.id) {
 	await store.retrieve(decodeURIComponent(String(route.params.id)))
+	// if item doesn't have ROLE_ARTIST role, redirect to 404
+	if (!item?.value?.roles?.includes('ROLE_ARTIST')) router.replace({ name: 'not-found' })
+	// if item is the same as the logged in user, redirect to profile
+	if (item?.value?.id === user?.value?.id) router.replace({ name: 'profile' })
 }
 
 const silentPush = async (id: string) => {
@@ -151,7 +163,7 @@ onBeforeUnmount(() => store.$reset())
 <template>
 	<v-alert v-if="error || authError" type="error" class="mb-4" v-text="error || authError" closable />
 
-	<Toolbar v-if="$route.name === 'profile'" color="primary-darken-1" :breadcrumb="breadcrumb" :is-loading="authIsLoading" main :partnered="item?.roles.includes('ASK_TO_BECOME_ARTIST')" @partner="partner(inputs)" @cancel-partner="cancelPartner(inputs)" />
+	<Toolbar v-if="$route.name === 'profile'" color="primary-darken-1" :actions="['partnered']" :breadcrumb="breadcrumb" :is-loading="authIsLoading" main :partnered="item?.roles.includes('ASK_TO_BECOME_ARTIST')" @partner="partner(inputs)" @cancel-partner="cancelPartner(inputs)" />
 	<Toolbar v-else color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item?.username ?? '', to: { name: 'artists' }}]" :is-loading="isLoading || authIsLoading" :nav="nav" main @nav="silentPush" />
 
 	<v-tabs v-model="tab" color="primary" fixed-tabs>
@@ -161,8 +173,8 @@ onBeforeUnmount(() => store.$reset())
 	</v-tabs>
 
 	<v-window v-if="item" v-model="tab" class="bg-surface-darken-1">
-		<v-window-item v-if="$route.name === 'profile'" value="0">
-			<v-card :disabled="utilsStore.isLoading || !inputs">
+		<v-window-item value="0">
+			<v-card v-if="tabs[0].if" :disabled="utilsStore.isLoading || !inputs">
 				<v-form ref="form" v-model="valid" @submit.prevent="handleEditProfile(inputs)">
 					<v-card-text>
 						<v-row>
@@ -208,7 +220,7 @@ onBeforeUnmount(() => store.$reset())
 		</v-window-item>
 
 		<v-window-item value="1">
-			<v-row v-if="item.events.length > 0" v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
+			<v-row v-if="tabs[1].if" v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
 				<v-col cols="12" sm="10" order-sm="1">
 					<v-card-title class="font-title">
 						<router-link v-if="item.id" :to="{ name: 'event', params: { id: event.id }}">
@@ -231,24 +243,32 @@ onBeforeUnmount(() => store.$reset())
 		</v-window-item>
 
 		<v-window-item value="2">
-			<v-row v-for="ticket, i in item.tickets" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
+			<v-row v-if="tabs[2].if" v-for="ticket, i in item.tickets.filter(_ => _.status === 1)" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
 				<v-col cols="12" sm="10" order-sm="1">
 					<v-card-title class="font-title">
-						<router-link v-if="item.id" :to="{ name: 'ticket', params: { id: ticket.id } }">
-							{{ ticket.event }}
+						<v-badge color="primary" content="1">
+							<v-icon icon="fa fa-ticket" size="md" />
+						</v-badge>
+
+						&nbsp;for&nbsp;
+
+						<router-link v-if="ticket.id" :to="{ name: 'event', params: { id: ticket.event.id }}">
+							{{ ticket.event.title }}
 						</router-link>
 
 						<span class="float-end text-overline text-muted">
-							{{ ticket.status }}
+							<!-- {{ new Date(ticket.day + 'T' + ticket.hour).toLocaleDateString() }} -->
+							{{ (new Date(ticket.day)).toLocaleDateString($vuetify.locale.current, formats.long) }} at {{ ticket.hour }}
 						</span>
 					</v-card-title>
 
-					<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm"
-						v-html="DOMPurify.sanitize(marked(ticket.event.description, { mangle: false, headerIds: false }))" />
+					<v-card-subtitle v-text="'Reference: ' + ticket.reference" />
+
+					<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm" v-html="DOMPurify.sanitize(marked(ticket.event.description, { mangle: false, headerIds: false }))" />
 				</v-col>
 
 				<v-col cols="12" sm="2">
-					<v-img :src="ticket.event.src" :alt="ticket.event.title" />
+					<v-img :src="ticket.event.src || 'https://fakeimg.pl/260/7750f8/FFF/?text=No%20Image&font=lobster&font_size=50'" :alt="ticket.event.title" />
 				</v-col>
 			</v-row>
 		</v-window-item>

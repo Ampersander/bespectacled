@@ -75,7 +75,7 @@ onBeforeUnmount(() => store.$reset())
 			<v-card class="sticky-top sticky-nav overflow-x-hidden overflow-y-auto font-title text-center" rounded="lg" min-height="268" data-simplebar>
 				<v-card-title class="my-2" v-text="item.title" />
 
-				<v-img v-if="typeof item.src === 'string'" class="card-bg" :src="item.src" cover />
+				<v-img class="card-bg" :src="item.src || 'https://fakeimg.pl/260/7750f8/FFF/?text=No%20Image&font=lobster&font_size=50'" cover />
 
 				<v-table>
 					<tbody>

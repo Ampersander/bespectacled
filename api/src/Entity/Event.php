@@ -25,44 +25,44 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 class Event
 {
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
-    #[Groups(['event:read', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
+    #[Groups(['event:read', 'venue:read', 'user:read', 'artist:read', 'schedule:read', 'ticket:read'])]
     private ?int $id = null;
 
     #[Gedmo\Slug(fields: ['title'])]
     #[ORM\Column(length: 128, unique: true)]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read', 'ticket:read'])]
     private ?string $slug = null;
 
     #[ORM\Column]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read', 'ticket:read'])]
     private ?string $title = null;
 
     #[Assert\NotBlank]
     #[ORM\Column(length: 255)]
     #[Assert\Length(min: 3, max: 255)]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read', 'ticket:read'])]
     private ?string $type = null;
 
     #[Assert\NotBlank]
     #[Assert\Positive]
     #[ORM\Column(type: 'float')]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read', 'ticket:read'])]
     private ?int $price = null;
 
     #[ORM\Column(type: 'text')]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read', 'ticket:read'])]
     private ?string $description = null;
 
-    #[ORM\Column]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
-    private ?string $src = null;
+    #[ORM\Column(nullable: true)]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read', 'ticket:read'])]
+    private ?string $src = 'https://fakeimg.pl/260/7750f8/FFF/?text=No%20Image&font=lobster&font_size=50';
 
     #[ORM\JoinColumn]
     #[Assert\NotBlank]
     #[ORM\ManyToOne(inversedBy: 'events')]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read', 'ticket:read'])]
     private ?Venue $venue = null;
 
     #[Assert\NotBlank]

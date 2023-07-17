@@ -21,12 +21,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: "`ticket`")]
 #[ApiResource(
     normalizationContext: ['groups' => ['ticket:read']],
-    denormalizationContext: ['groups' => ['ticket:write']],  
+    denormalizationContext: ['groups' => ['ticket:write']],
     // security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')",
 )]
 class Ticket
 {
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
+    #[Groups(['ticket:read', 'user:read', 'event:read', 'transaction:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
@@ -44,7 +45,7 @@ class Ticket
     private ?User $buyer = null;
 
     #[Assert\NotBlank]
-    #[Groups(['ticket:read', 'ticket:write'])]
+    #[Groups(['ticket:read', 'ticket:write', 'user:read'])]
     #[ORM\ManyToOne(inversedBy: 'tickets'), ORM\JoinColumn(nullable: false)]
     private ?Event $event = null;
 
@@ -53,9 +54,11 @@ class Ticket
     private ?Transaction $transaction = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['ticket:read', 'ticket:write', 'user:read', 'event:read', 'transaction:read'])]
     private ?string $day = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['ticket:read', 'ticket:write', 'user:read', 'event:read', 'transaction:read'])]
     private ?string $hour = null;
 
     #[ORM\Column(length: 255, nullable: true)]

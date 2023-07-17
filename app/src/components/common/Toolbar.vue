@@ -12,7 +12,7 @@ defineProps<{
 	partnered?: boolean
 	breadcrumb: BreadcrumbValue[]
 	nav?: { prev: any, next: any }
-	actions?: ('submit' | 'reset' | 'add' | 'edit' | 'delete' | 'detach')[]
+	actions?: ('submit' | 'reset' | 'add' | 'edit' | 'delete' | 'detach' | 'partnered')[]
 }>()
 
 const emit = defineEmits<{
@@ -41,8 +41,8 @@ const confirm = ref(false)
 			<v-btn :disabled="!nav?.next" class="float-end" size="small" variant="tonal" icon="fa fa-chevron-right" @click="emit('nav', nav.next.id as string)" />
 		</div>
 
-		<v-btn v-if="partnered" class="fill-height m-0 bg-dark rounded-0" prepend-icon="fa fa-cancel" :text="$t('cancelPartner')" @click="emit('cancelPartner')" />
-		<v-btn v-else class="fill-height m-0 bg-dark rounded-0" prepend-icon="fa fa-user-tie" :text="$t('partner')" @click="emit('partner')" />
+		<v-btn v-if="actions?.includes('partnered') && partnered" class="fill-height m-0 bg-dark rounded-0" prepend-icon="fa fa-cancel" :text="$t('cancelPartner')" @click="emit('cancelPartner')" />
+		<v-btn v-if="actions?.includes('partnered') && !partnered" class="fill-height m-0 bg-dark rounded-0" prepend-icon="fa fa-user-tie" :text="$t('partner')" @click="emit('partner')" />
 
 		<v-btn v-if="actions?.includes('add')" class="fill-height m-0 bg-success rounded-0" prepend-icon="fa fa-plus-circle" :text="$t('add')" @click="emit('add')" />
 		<v-btn v-if="actions?.includes('edit')" class="fill-height m-0 bg-warning rounded-0" prepend-icon="fa fa-pen-to-square" :text="$t('edit')" @click="emit('edit')" />

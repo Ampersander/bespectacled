@@ -105,7 +105,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column] // Postgres: #[ORM\Column(type: 'json', options: ['jsonb' => true])]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'artist:read'])]
     private array $roles = [];
 
     #[ORM\Column]

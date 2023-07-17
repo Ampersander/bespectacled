@@ -269,7 +269,7 @@ watchEffect(() => {
 			<BackToTop />
 
 			<v-banner
-				v-if="user && user?.roles?.includes('ASK_TO_BECOME_ARTIST') && $route.name != 'profile'"
+				v-if="user && user?.roles?.includes('ASK_TO_BECOME_ARTIST') && $route.name === 'home'"
 				style="z-index: 3;"
 				class="align-center position-fixed"
 				:class="scrolled ? 'mt-0' : 'mt-8'"
