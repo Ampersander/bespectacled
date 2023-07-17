@@ -74,8 +74,8 @@ const formats: Record<string, Intl.DateTimeFormatOptions> = {
 							@click="() => $router.push({ name: 'venue', params: { id: event.venue?.id } })" />
 						<v-list-item link prepend-icon="fa fa-calendar-days" title="Check Available Times"
 							@click="() => $router.push({ name: 'calendar', query: { venue: event.venue?.id } })" />
-						<v-list-item link prepend-icon="fa fa-ticket" title="Book Venue"
-							@click="() => $router.push({ name: 'ticketing', query: { venue: event.venue?.id } })" />
+						<!--<v-list-item link prepend-icon="fa fa-ticket" title="Book Venue"
+							@click="() => $router.push({ name: 'booking', query: { venue: event.venue?.id } })" />-->
 					</v-list>
 				</v-card>
 			</v-menu>

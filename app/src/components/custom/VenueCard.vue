@@ -86,7 +86,7 @@ const menus = ref<{ events: boolean[] }>({ events: [] })
 
 			<v-spacer />
 
-			<v-btn color="secondary" variant="outlined" v-text="'Rent Now'" @click="() => $router.push({ name: 'ticketing', query: { venue: venue.id } })" />
+			<!--<v-btn color="secondary" variant="outlined" v-text="'Rent Now'" @click="() => $router.push({ name: 'ticketing', query: { venue: venue.id } })" />-->
 			<v-btn color="primary" variant="elevated" v-text="'See More'" @click="() => $router.push({ name: 'venue', params: { id: venue.id } })" />
 		</v-card-actions>
 	</v-card>
