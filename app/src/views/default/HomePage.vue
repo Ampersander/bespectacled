@@ -1,7 +1,10 @@
 <script setup>
 import { onBeforeMount } from 'vue'
-import PaymentService from '@/services/payment.service';
+import { useRouter } from 'vue-router'
 import { useUtilsStore } from '@/store'
+import PaymentService from '@/services/payment.service'
+
+const router = useRouter()
 
 const onIntersect = {
 	handler: (b, e) => {
@@ -22,15 +25,11 @@ onBeforeMount(() => {
 	if (window.location.search.includes('?success')) {
 		//check if the payment was successful
 		PaymentService.checkPayment().then((response) => {
-			if (response.status === 200)
-				utilsStore.showToast('Payment successful!')
-			else
-				utilsStore.showToast('Payment failed!', 'danger')
+			if (response.status === 200) utilsStore.showToast('Payment successful!')
+			else utilsStore.showToast('Payment failed!', 'danger')
 
-			setTimeout(() => {
-				window.location.href = window.location.origin;
-			}, 2000);
-		});
+			setTimeout(() => { router.replace('/') }, 2000)
+		})
 	}
 })
 </script>
