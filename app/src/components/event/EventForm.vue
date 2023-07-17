@@ -9,7 +9,6 @@ import type { Event } from '@/types/event'
 import { useDate } from 'vuetify/labs/date'
 import type { SubmissionErrors } from '@/types/error'
 import { useMercureList } from '@/composables/mercureList'
-import FormRepeater from '@/components/common/FormRepeater.vue'
 import { useScheduleStore, useUserStore, useVenueStore } from '@/store'
 
 const props = defineProps<{
@@ -71,7 +70,6 @@ watch(search, val => {
 })
 
 // watch item and replace venue, artists ands schedules by their ids
-
 watch(() => search.value.venue, val => { val && val !== item.value.venue?.name && debounce(() => sendRequest('Venue')) })
 watch(() => search.value.user, val => { val && !item.value.artists?.some(_ => _.username === val) && debounce(() => sendRequest('User')) })
 watch(() => search.value.schedule, val => { val && !item.value.schedules?.some(_ => date.format(new Date(_.date), 'Y-m-d') === val) && debounce(() => sendRequest('Schedule')) })

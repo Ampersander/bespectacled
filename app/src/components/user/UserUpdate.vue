@@ -1,91 +1,66 @@
-<template>
-  <Toolbar
-    :actions="['delete']"
-    :breadcrumb="breadcrumb"
-    :is-loading="isLoading"
-    @delete="deleteItem"
-  />
+<script setup lang="ts">
+import { onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
+import { useRoute, useRouter } from 'vue-router'
 
-  <v-container fluid>
-    <v-alert v-if="error || deleteError" type="error" class="mb-4">
-      {{ error || deleteError }}
-    </v-alert>
+import type { User } from '@/types/user'
+import Form from '@/components/user/UserForm.vue'
+import Loading from '@/components/common/Loading.vue'
+import Toolbar from '@/components/common/Toolbar.vue'
+import { useUserStore, useUtilsStore } from '@/store'
+import { useBreadcrumb } from '@/composables/breadcrumb'
+import { useMercureItem } from '@/composables/mercureItem'
 
-    <v-alert v-if="created || updated" type="success" class="mb-4">
-      <template v-if="updated">
-        {{ $t("itemUpdated", [updated["@id"]]) }}
-      </template>
-      <template v-else-if="created">
-        {{ $t("itemCreated", [created["@id"]]) }}
-      </template>
-    </v-alert>
+const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+const breadcrumb = useBreadcrumb()
+const utilsStore = useUtilsStore()
 
-    <Form v-if="item" :values="item" :errors="violations" @submit="update" />
-  </v-container>
+const { userCreateStore, userUpdateStore, userDeleteStore } = useUserStore()
 
-  <Loading :visible="isLoading || deleteLoading" />
-</template>
+const { created } = storeToRefs(userCreateStore)
 
-<script lang="ts" setup>
-import { onBeforeUnmount } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useI18n } from "vue-i18n";
-import { storeToRefs } from "pinia";
-import Toolbar from "@/components/common/Toolbar.vue";
-import Form from "@/components/user/UserForm.vue";
-import Loading from "@/components/common/Loading.vue";
-import { useUserCreateStore, useUserDeleteStore, useUserUpdateStore } from "@/store";
-import { useMercureItem } from "@/composables/mercureItem";
-import { useBreadcrumb } from "@/composables/breadcrumb";
-import type { User } from "@/types/user";
+const { isLoading: deleteLoading, error: deleteError } = storeToRefs(userDeleteStore)
 
-const { t } = useI18n();
-const route = useRoute();
-const router = useRouter();
-const breadcrumb = useBreadcrumb();
+const { retrieved: item, updated, isLoading, error, violations, } = storeToRefs(userUpdateStore)
 
-const userCreateStore = useUserCreateStore();
-const { created } = storeToRefs(userCreateStore);
+useMercureItem({ store: userUpdateStore, deleteStore: userDeleteStore, redirectRouteName: 'UserList' })
 
-const userDeleteStore = useUserDeleteStore();
-const { isLoading: deleteLoading, error: deleteError } =
-  storeToRefs(userDeleteStore);
+await userUpdateStore.retrieve(decodeURIComponent(route.params.id as string))
 
-const userUpdateStore = useUserUpdateStore();
-const {
-  retrieved: item,
-  updated,
-  isLoading,
-  error,
-  violations,
-} = storeToRefs(userUpdateStore);
-
-useMercureItem({
-  store: userUpdateStore,
-  deleteStore: userDeleteStore,
-  redirectRouteName: "UserList",
-});
-
-await userUpdateStore.retrieve(decodeURIComponent(route.params.id as string));
-
+// ApiPlatform wants IRIs for relations
 async function update(item: User) {
-  await userUpdateStore.update(item);
-}
-
-async function deleteItem() {
-  if (!item?.value) {
-    userUpdateStore.setError(t("itemNotFound"));
-    return;
-  }
-
-  await userDeleteStore.deleteItem(item?.value);
-
-  router.push({ name: "UserList" });
+	await userUpdateStore.update(item)
+	utilsStore.showToast('User updated!')
 }
 
 onBeforeUnmount(() => {
-  userUpdateStore.$reset();
-  userCreateStore.$reset();
-  userDeleteStore.$reset();
-});
+	userUpdateStore.$reset()
+	userCreateStore.$reset()
+	userDeleteStore.$reset()
+})
 </script>
+
+<template>
+	<Toolbar :breadcrumb="breadcrumb" :is-loading="isLoading" />
+
+	<v-container fluid>
+		<v-alert v-if="error || deleteError" type="error" class="mb-4" v-text="error || deleteError" closable />
+
+		<v-alert v-if="created || updated" type="success" class="mb-4" closable>
+			<template v-if="created">
+				{{ $t('itemCreated', [created['@type'], created['username']]) }}
+			</template>
+
+			<template v-else-if="updated">
+				{{ $t('itemUpdated', [updated['@type'], updated['username']]) }}
+			</template>
+		</v-alert>
+
+		<Form v-if="item" :values="item" :errors="violations" @submit="update" />
+	</v-container>
+
+	<Loading :visible="isLoading || deleteLoading" />
+</template>

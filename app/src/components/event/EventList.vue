@@ -5,14 +5,13 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useDate } from 'vuetify/labs/date'
 
-import type { User } from '@/types/user'
 import type { Event } from '@/types/event'
 import type { VuetifyOrder } from '@/types/list'
 import Toolbar from '@/components/common/Toolbar.vue'
 import { useBreadcrumb } from '@/composables/breadcrumb'
 import { useMercureList } from '@/composables/mercureList'
 import ActionCell from '@/components/common/ActionCell.vue'
-import { useEventDeleteStore, useEventListStore, useUtilsStore } from '@/store'
+import { useEventDeleteStore, useEventListStore, useEventUpdateStore, useUtilsStore } from '@/store'
 
 const date = useDate()
 const { t } = useI18n()
@@ -26,6 +25,9 @@ const { deleted, mercureDeleted } = storeToRefs(eventDeleteStore)
 
 const eventListStore = useEventListStore()
 const { items, totalItems, error, isLoading } = storeToRefs(eventListStore)
+
+const eventUpdateStore = useEventUpdateStore()
+const { retrieved, updated, isLoading: updateIsLoading, error: updateError, violations, } = storeToRefs(eventUpdateStore)
 
 const page = ref('1')
 const order = ref({})
@@ -95,10 +97,10 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 		<v-data-table-server
 			v-model="selection"
 			class="rounded"
-			:headers="headers"
 			:items="items"
-			:items-length="totalItems"
+			:headers="headers"
 			:loading="isLoading"
+			:items-length="totalItems"
 			:items-per-page="items.length"
 			hover
 			show-select

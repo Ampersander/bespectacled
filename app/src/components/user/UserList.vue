@@ -51,6 +51,8 @@ const headers = [
 	{ title: t('user.email'), key: 'email', sortable: true },
 	{ title: t('user.roles'), key: 'roles', sortable: true },
 	{ title: t('user.events'), key: 'events', sortable: false },
+	{ title: t('user.tickets'), key: 'tickets', sortable: false },
+	{ title: t('user.bookings'), key: 'bookings', sortable: false },
 	{ title: t('user.enabled'), key: 'enabled', sortable: true }
 ]
 
@@ -74,13 +76,6 @@ const deleteItem = async (item: User) => {
 	sendRequest()
 }
 
-const deleteSelected = async () => {
-	await Promise.all(selection.value.map((item: User) => userDeleteStore.deleteItem(item)))
-	sendRequest()
-		.catch(() => userDeleteStore.setError(t('user.error.delete')))
-		.finally(() => selection.value = [])
-}
-
 const toggleEnabled = async (enabled: boolean, item: User) => {
 	await userUpdateStore.toggleEnabled(enabled, item)
 }
@@ -90,7 +85,7 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 </script>
 
 <template>
-	<Toolbar :actions="selection.length > 0 ? ['add', 'delete'] : ['add']" :breadcrumb="breadcrumb" :is-loading="isLoading" @add="goToCreatePage" @delete="deleteSelected" />
+	<Toolbar :actions="['add']" :breadcrumb="breadcrumb" :is-loading="isLoading" @add="goToCreatePage" />
 
 	<v-container fluid>
 		<v-alert v-if="error || updateError" type="error" class="mb-4" v-text="error || updateError" closable />
@@ -99,22 +94,22 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 			{{ $t('itemUpdated', [updated['@type'], updated['username']]) }}
 		</v-alert>
 
+		<!-- TODO filter out users with ROLE_SUPER_ADMIN INSTEAD -->
 		<v-data-table-server
-			v-model="selection"
 			class="rounded"
 			:headers="headers"
-			:items="items"
 			:items-length="totalItems"
-			:loading="isLoading || updateIsLoading"
 			:items-per-page="items.length"
+			:loading="isLoading || updateIsLoading"
+			:items="items.filter(_ => !_.roles.includes('ROLE_ADMIN'))"
 			hover
-			show-select
 			return-object
 			@update:page="updatePage"
 			@update:sortBy="updateOrder"
 		>
 			<template #item.actions="{ item }">
-				<ActionCell :actions="['show', 'update', 'delete']" @show="goToShowPage(item.raw)" @update="goToUpdatePage(item.raw)" @delete="deleteItem(item.raw)" />
+				<!-- TODO use rounded on the component not the buttons -->
+				<ActionCell :actions="['show', 'update']" @show="goToShowPage(item.raw)" @update="goToUpdatePage(item.raw)" />
 			</template>
 
 			<template #item.username="{ item }">
@@ -132,27 +127,74 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 			</template>
 
 			<template #item.roles="{ item }">
-				{{ item.raw.roles.join(', ') }}
+				<!-- TODO use checkboxes -->
+				{{ item.raw.roles.join(' • ') }}
 			</template>
 
 			<template #item.events="{ item }">
 				<v-menu transition="scale-transition">
 					<template #activator="{ props }">
 						<v-badge :content="item.raw.events.length" color="primary">
-							<v-icon v-bind="props" icon="fa fa-user" />
+							<v-icon v-bind="props" icon="fa fa-star" />
 						</v-badge>
 					</template>
 
 					<v-list>
-						<v-list-item v-if="router.hasRoute('UserShow')" v-for="event, i in item.raw.events" :key="i"
+						<v-list-item v-if="router.hasRoute('EventShow')" v-for="event, i in item.raw.events" :key="i"
 							:title="event.title"
 							:subtitle="event.type"
-							@click="$router.hasRoute('UserShow') && $router.push({ name: 'UserShow', params: { id: event.id } })"
+							@click="$router.hasRoute('EventShow') && $router.push({ name: 'EventShow', params: { id: event.id } })"
 						/>
 
 						<v-list-item v-else v-for="event, i in item.raw.events" :key="-i"
 							:title="event.title"
 							:subtitle="event.type"
+						/>
+					</v-list>
+				</v-menu>
+			</template>
+
+			<template #item.tickets="{ item }">
+				<v-menu transition="scale-transition">
+					<template #activator="{ props }">
+						<v-badge :content="item.raw.tickets.length" color="primary">
+							<v-icon v-bind="props" icon="fa fa-ticket" />
+						</v-badge>
+					</template>
+
+					<v-list>
+						<v-list-item v-if="router.hasRoute('TicketShow')" v-for="ticket, i in item.raw.tickets" :key="i"
+							:title="'#' + ticket.reference"
+							:subtitle="'Status: ' + ticket.status + ' • Event: ' + ticket.event.title"
+							@click="$router.hasRoute('TicketShow') && $router.push({ name: 'TicketShow', params: { id: ticket.id } })"
+						/>
+
+						<v-list-item v-else v-for="ticket, i in item.raw.tickets" :key="-i"
+							:title="'#' + ticket.reference"
+							:subtitle="'Status: ' + ticket.status + ' • Event: ' + ticket.event.title"
+						/>
+					</v-list>
+				</v-menu>
+			</template>
+
+			<template #item.bookings="{ item }">
+				<v-menu transition="scale-transition">
+					<template #activator="{ props }">
+						<v-badge :content="item.raw.bookings.length" color="primary">
+							<v-icon v-bind="props" icon="fa fa-calendar-check" />
+						</v-badge>
+					</template>
+
+					<v-list>
+						<v-list-item v-if="router.hasRoute('BookingShow')" v-for="booking, i in item.raw.bookings" :key="i"
+							:title="date.format(new Date(booking.date), 'fullDateWithWeekday')"
+							:subtitle="'Status: ' + booking.status + ' • Venue: ' + booking.venue.name"
+							@click="$router.hasRoute('BookingShow') && $router.push({ name: 'BookingShow', params: { id: booking.id } })"
+						/>
+
+						<v-list-item v-else v-for="booking, i in item.raw.bookings" :key="-i"
+							:title="date.format(new Date(booking.date), 'fullDateWithWeekday')"
+							:subtitle="'Status: ' + booking.status + ' • Venue: ' + booking.venue.name"
 						/>
 					</v-list>
 				</v-menu>

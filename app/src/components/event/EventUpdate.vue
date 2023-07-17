@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
@@ -20,22 +20,11 @@ const utilsStore = useUtilsStore()
 
 const { eventCreateStore, eventUpdateStore, eventDeleteStore } = useEventStore()
 
-// const eventCreateStore = useEventCreateStore()
 const { created } = storeToRefs(eventCreateStore)
 
-// const eventDeleteStore = useEventDeleteStore()
 const { isLoading: deleteLoading, error: deleteError } = storeToRefs(eventDeleteStore)
 
-// const eventUpdateStore = useEventUpdateStore()
 const { retrieved: item, updated, isLoading, error, violations, } = storeToRefs(eventUpdateStore)
-
-const icons: Record<string, string> = {
-	broadway: 'fa fa-mask',
-	concert: 'fa fa-microphone',
-	other: 'fa fa-question'
-}
-
-const selectedEvent = ref(null)
 
 useMercureItem({ store: eventUpdateStore, deleteStore: eventDeleteStore, redirectRouteName: 'EventList' })
 
@@ -50,12 +39,14 @@ const update = async (item: Event) => {
 		schedules: item.schedules?.map(schedule => schedule['@id'] as string)
 	})
 
-	utilsStore.showToast('lol')
+	utilsStore.showToast('Event updated!')
 }
 
 const deleteItem = async () => {
 	if (!item?.value) return eventUpdateStore.setError(t('itemNotFound'))
+
 	await eventDeleteStore.deleteItem(item?.value)
+	utilsStore.showToast('Event deleted!')
 	router.push({ name: 'EventList' })
 }
 

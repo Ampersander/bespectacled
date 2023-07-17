@@ -160,6 +160,8 @@ export const useAuthStore = defineStore('auth', {
 		},
 		logout(redirect = true) {
 			this.setUser(undefined)
+			this?.$reset()
+			// TODO reset userShowStore
 			redirect && router.push('/login')
 		},
 		profile(data = null) {

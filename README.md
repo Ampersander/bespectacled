@@ -39,9 +39,8 @@ If you want to deploy your application on a domain other than localhost, modify 
 
 ### Usage
 
-The API is available at the following address : `http://localhost/api`
-
-The front application is available at the following address : `http://localhost:8080`
+The API is available at the following address: `http://localhost/api`
+The front application is available at the following address: `http://localhost:8080`
 
 ### Debug
 * Get token: `curl -X POST -H "Content-Type: application/json" http://localhost:80/api/login -d '{"email":"user1@root.com","password":"Password123"}'`

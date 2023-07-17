@@ -1,107 +1,105 @@
 <script setup lang="ts">
-import { ref, Ref, toRef } from "vue";
-import { VForm } from "vuetify/components";
-import { formatDateInput } from "@/utils/date";
-import FormRepeater from "@/components/common/FormRepeater.vue";
-import type { Item } from "@/types/item";
-import type { User } from "@/types/user";
-import type { SubmissionErrors } from "@/types/error";
+import { computed, ref, Ref, toRef, watch } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+import { storeToRefs } from 'pinia'
+import { VForm } from 'vuetify/components'
+
+import type { Item } from '@/types/item'
+import type { User } from '@/types/user'
+import { useDate } from 'vuetify/labs/date'
+import { formatDateInput } from '@/utils/date'
+import type { SubmissionErrors } from '@/types/error'
+import FormRepeater from '@/components/common/FormRepeater.vue'
 
 const props = defineProps<{
-	values?: User;
-	errors?: SubmissionErrors;
-}>();
+	values?: User
+	errors?: SubmissionErrors
+}>()
 
-const violations = toRef(props, "errors");
+const violations = toRef(props, 'errors')
 
-const item: Ref<User> = ref({} as User);
+const date = useDate()
+
+const item: Ref<User> = ref({} as User)
 
 if (props.values) {
 	item.value = {
 		...props.values,
-		events: props.values.events?.map((item: Item) => item["@id"] ?? "") ?? [],
-		tickets: props.values.tickets?.map((item: Item) => item["@id"] ?? "") ?? [],
-		bookings: props.values.bookings?.map((item: Item) => item["@id"] ?? "") ?? [],
-		publicationDate: formatDateInput(props.values.publicationDate),
-		publicationDate: formatDateInput(props.values.publicationDate),
-		publicationDate: formatDateInput(props.values.publicationDate),
-	};
+		// events: props.values.events?.map((item: Item) => item['@id'] ?? '') ?? [],
+		// tickets: props.values.tickets?.map((item: Item) => item['@id'] ?? '') ?? [],
+		// bookings: props.values.bookings?.map((item: Item) => item['@id'] ?? '') ?? [],
+		// publicationDate: formatDateInput(props.values.publicationDate)
+	}
 }
 
-const emit = defineEmits<{
-	(e: "submit", item: User): void;
-}>();
+const emit = defineEmits<{ (e: 'submit', item: User): void }>()
 
-function emitSubmit() {
-	emit("submit", item.value);
-}
-
-const form: Ref<VForm | null> = ref(null);
+const form: Ref<VForm | null> = ref(null)
 
 function resetForm() {
-	if (!form.value) return;
-
-	form.value.reset();
+	if (!form.value) return
+	form.value.reset()
 }
 </script>
 
 <template>
-	<v-form ref="form" @submit.prevent="emitSubmit">
+	<v-form ref="form" @submit.prevent="emit('submit', item)">
 		<v-row>
 			<v-col cols="12" sm="6" md="6">
-				<v-text-field v-model="item.username" :error="Boolean(violations?.username)"
-					:error-messages="violations?.username" :label="$t('user.username')" required>
-					<template #append-inner>
-						<v-icon style="cursor: pointer" @click.prevent.stop="item.username = undefined">
-							mdi-close
-						</v-icon>
-					</template>
-				</v-text-field>
+				<v-text-field
+					v-model="item.username"
+					autofocus
+					autocapitalize
+					prepend-icon="fa fa-font text-primary"
+					:label="$t('user.username')"
+					:error="Boolean(violations?.username)"
+					:error-messages="violations?.username"
+					required
+					clearable
+				/>
 			</v-col>
+
+			<!-- <v-col cols="12" sm="6" md="6">
+				<v-text-field
+					v-model="item.email"
+					autofocus
+					autocapitalize
+					prepend-icon="fa fa-envelope text-primary"
+					:label="$t('user.email')"
+					:error="Boolean(violations?.email)"
+					:error-messages="violations?.email"
+					required
+					clearable
+				/>
+			</v-col> -->
+
 			<v-col cols="12" sm="6" md="6">
-				<v-text-field v-model="item.email" :error="Boolean(violations?.email)" :error-messages="violations?.email"
-					:label="$t('user.email')" required>
-					<template #append-inner>
-						<v-icon style="cursor: pointer" @click.prevent.stop="item.email = undefined">
-							mdi-close
-						</v-icon>
-					</template>
-				</v-text-field>
+				<!-- <FormRepeater :values="item.roles" :label="$t('user.roles')" @update="(values: any) => item.roles = values" /> -->
+
+				<!-- TODO Remove "ROLE_" prefix -->
+				<v-select
+					v-model="item.roles"
+					:items="['ROLE_USER', 'ROLE_ADMIN', 'ROLE_ARTIST', 'ASK_TO_BECOME_ARTIST']"
+					:item-value="item => item"
+					prepend-icon="fa fa-boxes-stacked text-orange"
+					:label="$t('event.roles')"
+					:error="Boolean(violations?.roles)"
+					:error-messages="violations?.roles"
+					chips
+					multiple
+					required
+					clearable
+					hide-no-data
+					closable-chips
+					auto-select-first
+				/>
 			</v-col>
-			<v-col cols="12" sm="6" md="6">
-				<v-text-field v-model="item.password" :error="Boolean(violations?.password)"
-					:error-messages="violations?.password" type="password" :label="$t('user.password')">
-					<template #append-inner>
-						<v-icon style="cursor: pointer" @click.prevent.stop="item.password = undefined">
-							mdi-close
-						</v-icon>
-					</template>
-				</v-text-field>
-			</v-col>
-			<v-col cols="12" sm="6" md="6">
-				<FormRepeater :values="item.roles" :label="$t('user.roles')" @update="(values: any) => item.roles = values" />
-				<!-- <v-text-field v-model="item.roles" :error="Boolean(violations?.roles)" :error-messages="violations?.roles"
-					:label="$t('user.roles')">
-					<template #append-inner>
-						<v-icon style="cursor: pointer" @click.prevent.stop="item.roles = undefined">
-							mdi-close
-						</v-icon>
-					</template>
-				</v-text-field> -->
-			</v-col>
-			<v-col cols="12" sm="6" md="6">
-				<v-text-field v-model="item.enabled" :error="Boolean(violations?.enabled)"
-					:error-messages="violations?.enabled" :label="$t('user.enabled')">
-					<template #append-inner>
-						<v-icon style="cursor: pointer" @click.prevent.stop="item.enabled = undefined">
-							mdi-close
-						</v-icon>
-					</template>
-				</v-text-field>
-			</v-col>
-			<v-col cols="12">
-				<FormRepeater :values="item.events" :label="$t('user.events')" @update="(values: any) => (item.events = values)" />
-			</v-col>
+
+			<!-- TODO item.enabled is false here when true in database -->
+			<!-- <v-col cols="12" sm="6" md="6">
+				<v-switch v-model="item.enabled" :prepend-icon="'fa fa-toggle-' + (item.enabled ? 'on' : 'off')" color="success" label="Enabled" />
+			</v-col> -->
 		</v-row>
 
 		<v-row>
