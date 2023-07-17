@@ -136,6 +136,7 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           LOCALE: ${{ secrets.LOCALE }}
   deploy:
+    needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
