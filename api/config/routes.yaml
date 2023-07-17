@@ -3,5 +3,4 @@ authentication_token:
     methods: ['POST']
 
 gesdinet_jwt_refresh_token:
-    path:     /refresh-token
-    defaults: { _controller: gesdinet.jwtrefreshtoken:refresh }
+    path: /api/token/refresh

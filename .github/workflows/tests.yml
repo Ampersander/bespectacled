@@ -1,5 +1,8 @@
 name: Tests
-on: [push]
+on:
+  push:
+    branches:
+      - develop
 jobs:
   php-unit-and-functional-tests:
     runs-on: ubuntu-20.04
@@ -11,6 +14,7 @@ jobs:
       matrix:
         php-versions: ["8.1"]
     steps:
+
       # —— Setup Github actions —————————————————————————————————————————————
       # https://github.com/actions/checkout (official)
       - name: Git checkout placeholder-service
@@ -27,6 +31,26 @@ jobs:
           update: true
       - name: Check PHP Version
         run: php -v
+      
+      - name: Create env file
+        run: |
+          touch .env
+          echo "APP_ENV=${{secrets.APP_ENV}}" >> .env
+          echo "APP_SECRET=${{secrets.APP_SECRET}}" >> .env
+          echo "DATABASE_URL=${{secrets.DATABASE_URL}}" >> .env
+          echo "JWT_SECRET=${{secrets.JWT_SECRET}}" >> .env
+          echo "JWT_PASSPHRASE=${{secrets.JWT_PASSPHRASE}}" >> .env
+          echo "JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}" >> .env
+          echo "JWT_PUBLIC_KEY=${{secrets.JWT_PUBLIC_KEY}}" >> .env
+          echo "CORS_ALLOW_ORIGIN=${{secrets.CORS_ALLOW_ORIGIN}}" >> .env
+          echo "APP_NAME=${{secrets.APP_NAME}}" >> .env
+          echo "APP_MAIL=${{secrets.APP_MAIL}}" >> .env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> .env
+          echo "MERCURE_URL=${{secrets.MERCURE_URL}}" >> .env
+          echo "MERCURE_PUBLIC_URL=${{secrets.MERCURE_PUBLIC_URL}}" >> .env
+          echo "MERCURE_JWT_SECRET=${{secrets.MERCURE_JWT_SECRET}}" >> .env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> .env
+      
       # —— Composer —————————————————————————————————————————————————————————
       - name: Validate composer.json and composer.lock
         run: composer validate
@@ -39,6 +63,8 @@ jobs:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
+      - name: Allow plugin
+        run: composer config --no-plugins allow-plugins.endroid/installer true
       - name: Install Composer dependencies
         run: composer install
       # —— Code style —— (Based on this package: https://github.com/OskarStark/php-cs-fixer-ga)
@@ -58,3 +84,6 @@ jobs:
       # flags: unittests
       # name: codecov-umbrella
       #fail_ci_if_error: true
+
+
+     

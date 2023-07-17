@@ -1,0 +1,19 @@
+{% block subject %}
+    A user ask to become an artist!
+{% endblock %}
+
+{% block body_html %}
+    <p>Hello Admin,</p>
+    
+    <p>A user has submitted a request to become an artist. Here are the details:</p>
+    
+    <ul>
+        <li><strong>Username:</strong> {{ user.username }}</li>
+        <li><strong>Email:</strong> {{ user.email }}</li>
+    </ul>
+    
+    <p>Please take appropriate action.</p>
+    
+    <p>Regards,</p>
+    <p>The BeSpectacled Team</p>
+{% endblock %}

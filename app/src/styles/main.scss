@@ -1,0 +1,141 @@
+@import 'simplebar';
+@import url('https://fonts.googleapis.com/css?family=Titillium+Web:400,900&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Rajdhani:400,500,600,700&display=swap');
+
+$font-family-body: 'Rajdhani', sans-serif;
+$font-family-title: 'Titillium Web', sans-serif;
+$font-family-textarea: 'Monaco', courier, monospace;
+
+*:not(i),
+.font-body {
+	font-family: $font-family-body !important;
+}
+
+.text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6,
+.font-title {
+	font-family: $font-family-title !important;
+}
+
+.v-textarea textarea {
+	font-family: $font-family-textarea !important;
+}
+
+dl, ol, ul, blockquote {
+	padding-inline-start: 40px !important;
+}
+
+.sticky-top {
+	z-index: 2;
+	top: calc(48px + 16px * 2);
+	position: sticky !important;
+
+	&.sticky-nav {
+		top: 48px;
+	}
+
+	&.sticky-full {
+		height: calc(100vh - 48px * 2 - 16px) !important;
+	}
+
+	&.sticky-aside {
+		height: calc(100vh - 48px * 2 + 16px) !important;
+	}
+}
+
+html,
+.mandatory {
+	scroll-snap-type: y mandatory;
+	scroll-padding-top: calc(48px * 2 + 16px);
+}
+
+.proximity {
+	scroll-snap-type: y proximity;
+	scroll-padding-top: calc(48px * 2 + 16px);
+}
+
+.snap {
+	scroll-snap-align: start;
+}
+
+.v-navigation-drawer {
+	border: none !important;
+}
+
+.v-parallax .v-sheet .v-btn {
+	position: absolute;
+	bottom: 48px;
+}
+
+.v-parallax .v-img__img {
+	object-fit: cover;
+}
+
+.controls {
+	right: 48px;
+}
+
+.v-divider {
+	width: auto !important;
+}
+
+.v-checkbox-btn label {
+	margin-bottom: 0;
+}
+
+.v-table .v-img__img {
+	object-position: left;
+}
+
+.blend {
+	padding-inline: 8px;
+	border-radius: 5px;
+	background: #FFF;
+	color: black !important;
+	mix-blend-mode: lighten;
+
+	&.blend-dark {
+		color: white !important;
+		mix-blend-mode: hard-light;
+	}
+}
+
+.backdrop {
+	background-color: #7750f877 !important;
+	backdrop-filter: blur(5px);
+	-webkit-backdrop-filter: blur(5px);
+}
+
+$breakpoints: (
+	'': 2,
+	'-xs': 5,
+	'-sm': 5,
+	'-md': 10,
+	'-lg': 15
+);
+
+// for each breakpoint
+@each $breakpoint, $value in $breakpoints {
+	// create a class with the breakpoint name
+	// and the value as the number of lines to clamp
+	.clamp#{$breakpoint} {
+		overflow: hidden;
+		display: -webkit-box;
+		-webkit-line-clamp: $value;
+		-webkit-box-orient: vertical;
+
+		&-fade {
+			position: relative;
+		}
+
+		&-fade::after {
+			content: "";
+			text-align: right;
+			position: absolute;
+			bottom: 0;
+			right: 0;
+			width: 70%;
+			height: 1.2em;
+			background: linear-gradient(to right, rgba(255, 255, 255, 0), rgb(var(--v-theme-surface-darken-1)) 50%);
+		}
+	}
+}

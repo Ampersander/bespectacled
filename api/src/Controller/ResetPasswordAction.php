@@ -5,8 +5,8 @@ namespace App\Controller;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use ApiPlatform\Validator\ValidatorInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use ApiPlatform\Core\Validator\ValidatorInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 

@@ -1,17 +1,31 @@
-name: SSH Deploy
+name: SSH Deployment
+
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+
 jobs:
-  build:
+  php-unit-and-functional-tests:
     runs-on: ubuntu-20.04
+    defaults:
+      run:
+        working-directory: ./api
+    strategy:
+      fail-fast: true
+      matrix:
+        php-versions: ["8.1"]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-      # Install PHP
+
+      # —— Setup Github actions —————————————————————————————————————————————
+      # https://github.com/actions/checkout (official)
+      - name: Git checkout placeholder-service
+        uses: actions/checkout@v2
+      # https://github.com/shivammathur/setup-php (community)
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.0"
+          php-version: ${{ matrix.php-versions }}
           coverage: none
           tools: composer:v2
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, iconv, json, mbstring, pdo
@@ -19,7 +33,27 @@ jobs:
           update: true
       - name: Check PHP Version
         run: php -v
-      # Install backend dependencies (Composer)
+      
+      - name: Create env file
+        run: |
+          touch .env
+          echo "APP_ENV=${{secrets.APP_ENV}}" >> .env
+          echo "APP_SECRET=${{secrets.APP_SECRET}}" >> .env
+          echo "DATABASE_URL=${{secrets.DATABASE_URL}}" >> .env
+          echo "JWT_SECRET=${{secrets.JWT_SECRET}}" >> .env
+          echo "JWT_PASSPHRASE=${{secrets.JWT_PASSPHRASE}}" >> .env
+          echo "JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}" >> .env
+          echo "JWT_PUBLIC_KEY=${{secrets.JWT_PUBLIC_KEY}}" >> .env
+          echo "CORS_ALLOW_ORIGIN=${{secrets.CORS_ALLOW_ORIGIN}}" >> .env
+          echo "APP_NAME=${{secrets.APP_NAME}}" >> .env
+          echo "APP_MAIL=${{secrets.APP_MAIL}}" >> .env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> .env
+          echo "MERCURE_URL=${{secrets.MERCURE_URL}}" >> .env
+          echo "MERCURE_PUBLIC_URL=${{secrets.MERCURE_PUBLIC_URL}}" >> .env
+          echo "MERCURE_JWT_SECRET=${{secrets.MERCURE_JWT_SECRET}}" >> .env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> .env
+      
+      # —— Composer —————————————————————————————————————————————————————————
       - name: Validate composer.json and composer.lock
         run: composer validate
       - name: Get composer cache directory
@@ -31,33 +65,129 @@ jobs:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
+      - name: Allow plugin
+        run: composer config --no-plugins allow-plugins.endroid/installer true
       - name: Install Composer dependencies
         run: composer install
-      # Prepare .env file for production
-      - name: Make production envfile
-        uses: SpicyPizza/create-envfile@v1
+      # —— Code style —— (Based on this package: https://github.com/OskarStark/php-cs-fixer-ga)
+      - name: PHP-CS-Fixer
+        uses: docker://oskarstark/php-cs-fixer-ga
         with:
-          envkey_APP_ENV: prod
-          envkey_APP_DEBUG: false
-          envkey_APP_SECRET: ${{ secrets.APP_SECRET }}
-          file_name: .env
-      # Copying files and artifacts via SSH
-      - name: Copying files to server
-        uses: appleboy/scp-action@master
+          args: --config=api/.php-cs-fixer.dist.php --allow-risky=yes
+      ## —— Tests ———————————————————————————————————————————————————————————
+      - name: Run functionnal and unit tests with PHPUNIT
+        run: vendor/bin/simple-phpunit tests
+      # —— Code coverage ————————————————————————————————————————————————————
+      #- name: Upload coverage to Codecov
+      # uses: codecov/codecov-action@v1
+      # with:
+      # token: ${{ secrets.CODECOV_TOKEN }}
+      # file: ./api/coverage.xml
+      # flags: unittests
+      # name: codecov-umbrella
+      #fail_ci_if_error: true
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
         with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          passphrase: ""
-          rm: true
-          source: "./"
-          target: ${{ secrets.REMOTE_TARGET }}
-      # Run commands on production
-      - name: Executing remote ssh commands
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker images - Bespectacled API
+        uses: docker/build-push-action@v2
+        with:
+          context: ./api
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/bespectacled-api:latest
+        env:
+          APP_ENV: ${{ secrets.APP_ENV }}
+          APP_SECRET: ${{ secrets.APP_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_PASSPHRASE: ${{ secrets.JWT_PASSPHRASE }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
+          CORS_ALLOW_ORIGIN: ${{ secrets.CORS_ALLOW_ORIGIN }}
+          APP_NAME: ${{ secrets.APP_NAME }}
+          APP_MAIL: ${{ secrets.APP_MAIL }}
+          MAILER_DSN: ${{ secrets.MAILER_DSN }}
+          MERCURE_URL: ${{ secrets.MERCURE_URL }}
+          MERCURE_PUBLIC_URL: ${{ secrets.MERCURE_PUBLIC_URL }}
+          MERCURE_JWT_SECRET: ${{ secrets.MERCURE_JWT_SECRET }}
+
+      - name: Build and push Docker images - Bespectacled APP
+        uses: docker/build-push-action@v2
+        with:
+          context: ./app
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/bespectacled-app:latest
+        env:
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          VITE_STRIPE_ACCOUNT: ${{ secrets.VITE_STRIPE_ACCOUNT }}
+          API_VERSION: ${{ secrets.API_VERSION }}
+          VITE_NODE_ENV: ${{ secrets.VITE_NODE_ENV }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          LOCALE: ${{ secrets.LOCALE }}
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Configure SSH
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          passphrase: ""
-          script: rsync -a --exclude={'var','temp'} --delete ${{ secrets.REMOTE_TARGET }} ${{ secrets.REMOTE_TARGET_DEPLOY }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_AUTH }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+
+      - name: Create env file
+        run: |
+          touch api/.env
+          touch app/.env
+          touch .env
+          echo "API_PORT=${{secrets.API_PORT}}" >> .env
+          echo "APP_PORT=${{secrets.APP_PORT}}" >> .env
+          echo "APP_ENV=${{secrets.APP_ENV}}" >> api/.env
+          echo "APP_SECRET=${{secrets.APP_SECRET}}" >> api/.env
+          echo "DATABASE_URL=${{secrets.DATABASE_URL}}" >> api/.env
+          echo "JWT_SECRET=${{secrets.JWT_SECRET}}" >> api/.env
+          echo "JWT_PASSPHRASE=${{secrets.JWT_PASSPHRASE}}" >> api/.env
+          echo "JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}" >> api/.env
+          echo "JWT_PUBLIC_KEY=${{secrets.JWT_PUBLIC_KEY}}" >> api/.env
+          echo "CORS_ALLOW_ORIGIN=${{secrets.CORS_ALLOW_ORIGIN}}" >> api/.env
+          echo "APP_NAME=${{secrets.APP_NAME}}" >> api/.env
+          echo "APP_MAIL=${{secrets.APP_MAIL}}" >> api/.env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> api/.env
+          echo "MERCURE_URL=${{secrets.MERCURE_URL}}" >> api/.env
+          echo "MERCURE_PUBLIC_URL=${{secrets.MERCURE_PUBLIC_URL}}" >> api/.env
+          echo "MERCURE_JWT_SECRET=${{secrets.MERCURE_JWT_SECRET}}" >> api/.env
+          echo "MAILER_DSN=${{secrets.MAILER_DSN}}" >> api/.env
+          echo "VITE_STRIPE_PUBLISHABLE_KEY=${{secrets.VITE_STRIPE_PUBLISHABLE_KEY}}" >> app/.env
+          echo "VITE_STRIPE_ACCOUNT=${{secrets.VITE_STRIPE_ACCOUNT}}" >> app/.env
+          echo "API_VERSION=${{secrets.API_VERSION}}" >> app/.env
+          echo "VITE_NODE_ENV=${{secrets.VITE_NODE_ENV}}" >> app/.env
+          echo "VITE_API_URL=${{secrets.VITE_API_URL}}" >> app/.env
+          echo "LOCALE=${{secrets.LOCALE}}" >> app/.env
+
+      - name: Create Docker network
+        run: docker network create infrastructure
+
+      - name: Build Docker image
+        run: docker-compose build
+
+      - name: Start Docker containers
+        run: docker-compose up -d

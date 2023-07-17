@@ -23,9 +23,11 @@ class JWTCreatedListener {
     {
         $request = $this->requestStack->getCurrentRequest();
 
-        $payload       = $event->getData();
-        $payload['username'] = $event->getUser()->getUsername();
-        $payload['id'] = $event->getUser()->getId();
+        $payload = $event->getData();
+        /** @var \App\Entity\User  */
+        $user = $event->getUser();
+        $payload['username'] = $user->getUserIdentifier();
+        $payload['id'] = $user->getId();
 
         $event->setData($payload);
     }

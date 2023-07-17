@@ -1,6 +1,6 @@
 api_platform:
-    title: 'Symfony API with Vue.js and API Platform'
-    description: 'A Symfony API to manage a simple blog app.'
+    title: 'BeSpectacled API'
+    description: 'An API interface to manage BeSpectacled entities.'
     version: '1.0.0'
     mapping:
         paths: ['%kernel.project_dir%/src/Entity']
@@ -12,3 +12,7 @@ api_platform:
           apiKey:
             name: Authorization
             type: header
+    defaults:
+       pagination_enabled: false
+    eager_loading:
+        max_joins: 100

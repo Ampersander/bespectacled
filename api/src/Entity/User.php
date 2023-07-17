@@ -2,138 +2,142 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Core\Annotation\ApiResource;
+use App\Repository\UserRepository;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use App\Controller\ArtistsController;
+use App\Controller\ProfileController;
+use ApiPlatform\Metadata\GetCollection;
+use App\Controller\ResetPasswordAction;
+use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use Doctrine\Common\Collections\ArrayCollection;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
 use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Serializer\Annotation\SerializedName;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
-use App\Controller\UserController;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+// use Symfony\Component\Security\Core\Authorization\ExpressionLanguage
 
-#[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: "`user`")]
 #[ApiResource(
-    normalizationContext: ["groups" => ["user:get"]],
-    denormalizationContext: ["groups" => ["user:post"]],
-    collectionOperations: [
-        "get" => [
-            "pagination_enabled" => false,
-            "access_control" => "is_granted('ROLE_ADMIN')",
-            "normalization_context" => ["groups" => ["user:get"]]
-        ],
-        "post" => [
-            "pagination_enabled" => false,
-            "denormalization_context" => ["groups" => ["user:post"]]
-        ],
-        "me" => [
-            "method" => "GET",
-            "path" => "/users/me",
-            "controller" => UserController::class,
-            "pagination_enabled" => false
-        ]
-    ],
-    validationGroups: ["user:get", "user:post", "user:put"],
-    itemOperations: [
-        "get" => [
-            "normalization_context" => [
-                "groups" => ["user:get"],
-                "access_control" => "is_granted('IS_AUTHENTICATED_FULLY') and object == user  or is_granted('ROLE_ADMIN')"
-            ]
-        ],
-        "put" => [
-            "denormalization_context" => ["groups" => ["user:put"]],
-            "normalization_context" => ["groups" => ["user:get"]],
-            "access_control" => "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
-        ],
-        "delete" => [
-            "access_control" => "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
-        ],
-        "put-password" => [
-            "method" => "PUT",
-            "path" => "/users/{id}/reset-password",
-            "controller" => ResetPasswordAction::class,
-            "denormalization_context" => ["groups" => ["user:reset:password"]],
-            "access_control" => "is_granted('IS_AUTHENTICATED_FULLY') and object == user"
-        ]
+    normalizationContext: ['groups' => ['user:read']],
+    denormalizationContext: ['groups' => ['user:write']],
+    security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')",
+    operations: [
+        new GetCollection(),
+        new GetCollection(
+            name: 'profile',
+            uriTemplate: '/profile',
+            controller: ProfileController::class,
+            security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        ),
+        new GetCollection(
+            name: 'artists',
+            uriTemplate: '/artists',
+            controller: ArtistsController::class,
+            security: "is_granted('PUBLIC_ACCESS')"
+        ),
+        new Get(
+            security: "is_granted('PUBLIC_ACCESS')",
+            normalizationContext: ['groups' => ['artist:read']]
+        ),
+        new Post(),
+        new Post(
+            name: 'register',
+            uriTemplate: '/register',
+            security: "is_granted('PUBLIC_ACCESS')",
+            denormalizationContext: ['groups' => ['user:register']]
+        ),
+        new Put(),
+        // "reset-password" => [
+        //     "method" => "PUT",
+        //     "path" => "/users/{id}/reset-password",
+        //     "controller" => ResetPasswordAction::class,
+        //     "denormalization_context" => ["groups" => ["user:reset:password"]],
+        //     "access_control" => "is_granted('IS_AUTHENTICATED_FULLY') and object == user"
+        // ]
+        // new Put(
+        //     name: 'reset-password',
+        //     uriTemplate: '/users/{id}/reset-password',
+        //     controller: ResetPasswordAction::class,
+        //     denormalizationContext: ['groups' => ['user:reset:password']],
+        //     security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user"
+        // ),
+        new Delete()
     ]
 )]
+#[ApiFilter(BooleanFilter::class)]
+#[ApiFilter(SearchFilter::class, strategy: 'ipartial')]
+#[ApiFilter(OrderFilter::class, properties: ['id' => 'DESC', 'username' => 'ASC'])]
 #[ORM\HasLifecycleCallbacks]
-#[UniqueEntity("email")]
+#[ORM\Table(name: "`user`")]
+#[ORM\Entity(repositoryClass: UserRepository::class)]
+#[UniqueEntity('email', message: 'This email is already used.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[ORM\PrePersist]
-    #[ORM\PreUpdate]
-    public function updatedTimestamps(): void
+    #[ORM\PrePersist, ORM\PreUpdate]
+    public function updateTimestamps(): void
     {
-        $this->setUpdatedAt(new \DateTime('now'));
-        if ($this->getCreatedAt() === null) {
-            $this->setCreatedAt(new \DateTime('now'));
-        }
+        if ($this->getCreatedAt() === null) $this->setCreatedAt(new \DateTimeImmutable());
+        $this->setUpdatedAt(new \DateTimeImmutable());
     }
 
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: "integer")]
-    #[Groups("user:get")]
-    private $id;
+    #[Groups(['user:read', 'artist:read', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
+    #[ORM\Id, ORM\Column, ORM\GeneratedValue]
+    private ?int $id = null;
 
-
-    #[Groups(["user:post", "user:get"])]
     #[Assert\NotBlank]
-    #[Assert\Email]
-    #[ORM\Column(type: "string", length: 180, unique: true)]
-    private $email;
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Groups(['user:read', 'artist:read', 'user:write', 'user:register', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
+    private ?string $username = null;
 
-    #[ORM\Column(type: "json")]
-    #[Groups("user:get")]
-    private $roles = [];
+    #[Assert\Email, Assert\NotBlank]
+    #[ORM\Column(length: 180, unique: true)]
+    #[Groups(['user:read', 'user:write', 'user:register', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
+    private ?string $email = null;
 
-    #[ORM\Column(type: "string")]
-    #[Assert\NotBlank]
+    #[ORM\Column] // Postgres: #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    #[Groups(['user:read', 'user:write', 'artist:read'])]
+    private array $roles = [];
+
+    #[ORM\Column]
+    #[Groups(['user:write', 'user:register'])]
+    #[Assert\NotCompromisedPassword()]
     #[Assert\Regex(
-        pattern: "/(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{7,}/",
-        message: "Password must be seven characters long and contain at least one digit, one upper case letter and one lower case letter"
+        pattern: "/(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{8,}/",
+        message: "Password must be eight characters long and contain at least one digit, one upper case letter and one lower case letter"
     )]
-    private $password;
+    private ?string $password = null;
 
-    #[SerializedName("password")]
-    #[Assert\NotBlank]
-    #[Groups("user:post")]
-    private $plainPassword;
+    // #[Assert\NotBlank]
+    #[Groups(['user:write', 'user:register'])]
+    #[SerializedName('password')]
+    private ?string $plainPassword = null;
 
+    #[Groups(['user:read', 'user:write'])]
+    #[ORM\Column(type: 'boolean', options: ['default' => '0'])]
+    private bool $enabled = false;
 
-    #[ORM\Column(type: "string", length: 255)]
-    #[Groups(["user:post", "user:get"])]
-    #[Assert\NotBlank]
-    private $username;
+    #[ORM\Column(length: 40, nullable: true)]
+    private ?string $confirmationToken = null;
 
-    #[ORM\Column(type: "boolean", options: ["default" => "0"])]
-    private $enabled = false;
-
-    #[ORM\Column(type: "string", length: 40, nullable: true)]
-    private $confirmationToken;
-
-    #[Groups(["user:get"])]
-    #[ORM\Column(type: "datetime")]
-    private $createdAt;
-
-    #[Groups(["user:get"])]
-    #[ORM\Column(type: "datetime", nullable: true)]
-    private $updatedAt;
-
-    #[ORM\Column(name: "password_change_date", type: "integer", nullable: true)]
+    #[ORM\Column(name: 'password_change_date', type: 'integer', nullable: true)]
     private $passwordChangeDate;
 
-    #[Groups(["user:reset:password"])]
-    #[SecurityAssert\UserPassword(message: "Wrong value for your current password")]
+    // TODO this class below doesn't exist
+    // #[SecurityAssert\UserPassword(message: "Wrong value for your current password")]
+    #[Groups('user:reset:password')]
     private $oldPassword;
 
-    #[Groups(["user:reset:password"])]
+    #[Groups('user:reset:password')]
     #[Assert\NotBlank(groups: ["user:reset:password"])]
     #[Assert\Regex(
         pattern: "/(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{7,}/",
@@ -141,99 +145,59 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     )]
     private $newPassword;
 
-
-    #[Groups(["user:reset:password"])]
-    #[Assert\NotBlank(groups: ["user:reset:password"])]
+    #[Groups('user:reset:password')]
+    #[Assert\NotBlank(groups: ['user:reset:password'])]
     #[Assert\Expression(
-        "this.getNewPassword() === this.getNewRetypedPassword()",
-        message: "passwords does not match"
+        'this.getNewPassword() === this.getNewRetypedPassword()',
+        message: 'passwords does not match'
     )]
     private $newRetypedPassword;
 
-    #[ORM\OneToMany(mappedBy: 'client', targetEntity: RoomReservation::class)]
-    #[Groups("user:get")]
-    private Collection $roomReservations;
-
-    #[ORM\OneToMany(mappedBy: 'buyer', targetEntity: Ticketing::class)]
-    #[Groups("user:get")]
-    private Collection $ticketings;
-
-    #[ORM\OneToMany(mappedBy: 'buyer', targetEntity: PaymentTransaction::class)]
-    private Collection $paymentTransactions;
-
-    #[ORM\Column(type: "boolean", options: ["default" => "0"])]
-    private $validatedAccountArtist = false;
-
-    #[Groups(["user:get"])]
-    #[ORM\Column(type: "datetime", nullable: true)]
-    private $deletedAt;
-
-    #[ORM\ManyToMany(targetEntity: Event::class, mappedBy: 'artists')]
+    #[Groups(['user:read', 'artist:read'])]
+    #[ORM\ManyToMany(mappedBy: 'artists', targetEntity: Event::class)]
     private Collection $events;
+
+    #[Groups('user:read')]
+    #[ORM\OneToMany(mappedBy: 'buyer', targetEntity: Ticket::class)]
+    private Collection $tickets;
+
+    #[Groups('user:read')]
+    #[ORM\OneToMany(mappedBy: 'client', targetEntity: Booking::class)]
+    private Collection $bookings;
+
+    #[Groups('user:read')]
+    #[ORM\OneToMany(mappedBy: 'buyer', targetEntity: Transaction::class)]
+    private Collection $transactions;
+
+    #[ORM\Column]
+    #[Groups('user:read')]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column]
+    #[Groups('user:read')]
+    private ?\DateTimeImmutable $updatedAt = null;
+
+    #[Groups('user:read')]
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeImmutable $deletedAt = null;
 
     public function __construct()
     {
-        $this->roomReservations = new ArrayCollection();
-        $this->ticketings = new ArrayCollection();
-        $this->paymentTransactions = new ArrayCollection();
+        // https://api-platform.com/docs/core/serialization/#collection-relation
         $this->events = new ArrayCollection();
+        $this->tickets = new ArrayCollection();
+        $this->bookings = new ArrayCollection();
+        $this->transactions = new ArrayCollection();
     }
-
-    public function isValidatedAccountArtist(): ?bool
-    {
-        return $this->validatedAccountArtist;
-    }
-
-    public function setValidatedAccountArtist(bool $validatedAccountArtist): self
-    {
-        $this->validatedAccountArtist = $validatedAccountArtist;
-
-        return $this;
-    }
-
-    public function getDeletedAt(): ?\DateTimeInterface
-    {
-        return $this->deletedAt;
-    }
-
-    public function setDeletedAt(\DateTimeInterface $deletedAt): self
-    {
-        $this->deletedAt = $deletedAt;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Event>
-     */
-    public function getEvents(): Collection
-    {
-        return $this->events;
-    }
-
-    public function addEvent(Event $event): self
-    {
-        if (!$this->events->contains($event)) {
-            $this->events->add($event);
-            $event->addArtist($this);
-        }
-
-        return $this;
-    }
-
-    public function removeEvent(Event $event): self
-    {
-        if ($this->events->removeElement($event)) {
-            $event->removeArtist($this);
-        }
-
-        return $this;
-    }
-
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getUsername(): string
+    {
+        return (string) $this->username;
     }
 
     public function getEmail(): ?string
@@ -258,11 +222,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string) $this->email;
     }
 
-    public function getUsername(): string
-    {
-        return (string) $this->username;
-    }
-
     /**
      * @see UserInterface
      */
@@ -273,6 +232,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $roles[] = 'ROLE_USER';
 
         return array_unique($roles);
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return in_array($role, $this->getRoles());
     }
 
     public function setRoles(array $roles): self
@@ -360,31 +324,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(?\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
-
     public function getPasswordChangeDate()
     {
         return $this->passwordChangeDate;
@@ -434,29 +373,56 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, RoomReservation>
+     * @return Collection<int, Event>
      */
-    public function getRoomReservations(): Collection
+    public function getEvents(): Collection
     {
-        return $this->roomReservations;
+        return $this->events;
     }
 
-    public function addRoomReservation(RoomReservation $roomReservation): self
+    public function addEvent(Event $event): self
     {
-        if (!$this->roomReservations->contains($roomReservation)) {
-            $this->roomReservations->add($roomReservation);
-            $roomReservation->setClient($this);
+        if (!$this->events->contains($event)) {
+            $this->events->add($event);
+            $event->addArtist($this);
         }
 
         return $this;
     }
 
-    public function removeRoomReservation(RoomReservation $roomReservation): self
+    public function removeEvent(Event $event): self
     {
-        if ($this->roomReservations->removeElement($roomReservation)) {
+        if ($this->events->removeElement($event)) {
+            $event->removeArtist($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Ticket>
+     */
+    public function getTickets(): Collection
+    {
+        return $this->tickets;
+    }
+
+    public function addTicket(Ticket $ticket): self
+    {
+        if (!$this->tickets->contains($ticket)) {
+            $this->tickets->add($ticket);
+            $ticket->setBuyer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTicket(Ticket $ticket): self
+    {
+        if ($this->tickets->removeElement($ticket)) {
             // set the owning side to null (unless already changed)
-            if ($roomReservation->getClient() === $this) {
-                $roomReservation->setClient(null);
+            if ($ticket->getBuyer() === $this) {
+                $ticket->setBuyer(null);
             }
         }
 
@@ -464,29 +430,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, Ticketing>
+     * @return Collection<int, Booking>
      */
-    public function getTicketings(): Collection
+    public function getBookings(): Collection
     {
-        return $this->ticketings;
+        return $this->bookings;
     }
 
-    public function addTicketing(Ticketing $ticketing): self
+    public function addBooking(Booking $booking): self
     {
-        if (!$this->ticketings->contains($ticketing)) {
-            $this->ticketings->add($ticketing);
-            $ticketing->setBuyer($this);
+        if (!$this->bookings->contains($booking)) {
+            $this->bookings->add($booking);
+            $booking->setClient($this);
         }
 
         return $this;
     }
 
-    public function removeTicketing(Ticketing $ticketing): self
+    public function removeBooking(Booking $booking): self
     {
-        if ($this->ticketings->removeElement($ticketing)) {
+        if ($this->bookings->removeElement($booking)) {
             // set the owning side to null (unless already changed)
-            if ($ticketing->getBuyer() === $this) {
-                $ticketing->setBuyer(null);
+            if ($booking->getClient() === $this) {
+                $booking->setClient(null);
             }
         }
 
@@ -494,31 +460,67 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, PaymentTransaction>
+     * @return Collection<int, Transaction>
      */
-    public function getPaymentTransactions(): Collection
+    public function getTransactions(): Collection
     {
-        return $this->paymentTransactions;
+        return $this->transactions;
     }
 
-    public function addPaymentTransaction(PaymentTransaction $paymentTransaction): self
+    public function addTransaction(Transaction $transaction): self
     {
-        if (!$this->paymentTransactions->contains($paymentTransaction)) {
-            $this->paymentTransactions->add($paymentTransaction);
-            $paymentTransaction->setBuyer($this);
+        if (!$this->transactions->contains($transaction)) {
+            $this->transactions->add($transaction);
+            $transaction->setBuyer($this);
         }
 
         return $this;
     }
 
-    public function removePaymentTransaction(PaymentTransaction $paymentTransaction): self
+    public function removeTransaction(Transaction $transaction): self
     {
-        if ($this->paymentTransactions->removeElement($paymentTransaction)) {
+        if ($this->transactions->removeElement($transaction)) {
             // set the owning side to null (unless already changed)
-            if ($paymentTransaction->getBuyer() === $this) {
-                $paymentTransaction->setBuyer(null);
+            if ($transaction->getBuyer() === $this) {
+                $transaction->setBuyer(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getDeletedAt(): ?\DateTimeInterface
+    {
+        return $this->deletedAt;
+    }
+
+    public function setDeletedAt(\DateTimeInterface $deletedAt): self
+    {
+        $this->deletedAt = $deletedAt;
 
         return $this;
     }

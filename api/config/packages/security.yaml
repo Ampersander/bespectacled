@@ -1,15 +1,12 @@
 security:
     password_hashers:
-        # auto hasher with default options for the User class (and children)
-        App\Entity\User: "auto"
+        App\Entity\User: 'auto'
 
-        # auto hasher with custom options for all PasswordAuthenticatedUserInterface instances
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
             algorithm: "auto"
             cost: 15
-    encoders:
-        App\Entity\User:
-            algorithm: auto
+
+    enable_authenticator_manager: true
 
     providers:
         app_user_provider:
@@ -20,42 +17,43 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        login:
-            pattern: ^/api/login
+        api:
+            pattern: ^/api
             stateless: true
-            anonymous: true
+            entry_point: jwt
+            provider: app_user_provider
             json_login:
                 check_path: /api/login
                 username_path: email
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            jwt: ~
+            refresh_jwt:
+                check_path: /api/token/refresh
+                provider: app_user_provider
             user_checker: App\Security\UserEnabledChecker
-            
-        forget_password:
-            pattern: ^/api/forget-password
+        forgot_password:
+            pattern: ^/api/forgot-password
             stateless: true
-            anonymous: true
+            provider: app_user_provider
             json_login:
-                check_path: /api/forget-password
+                check_path: /api/forgot-password
                 username_path: email
+                password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
-        api:
-            pattern: ^/api/
-            stateless: true
-            anonymous: true
-            provider: app_user_provider
-            guard:
-                authenticators:
-                    - App\Security\TokenAuthenticator
-        refresh:
-            pattern: ^/refresh-token
-            stateless: true
-            anonymous: true
+            jwt: ~
         main:
-            anonymous: lazy
+            stateless: true
             provider: app_user_provider
+            json_login:
+                check_path: /api/login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            jwt: ~
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -66,15 +64,26 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - {
-              path: ^/api/users,
-              roles: IS_AUTHENTICATED_FULLY,
-              methods: [GET, PUT, PATCH, DELETE],
-          }
-        - {
-              path: ^/api/events,
-              roles: IS_AUTHENTICATED_FULLY,
-              methods: [GET, PUT, PATCH, DELETE],
-          }  
-        - { path: ^/refresh-token, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        # - { path: ^/api/users, roles: IS_AUTHENTICATED_FULLY, methods: [GET, PUT, PATCH, DELETE], }
+        # - { path: ^/api/events, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [GET, PUT, PATCH, DELETE], }
+        - { path: ^/api/(login|token/refresh), roles: PUBLIC_ACCESS }
+        # - { path: ^/api/forgot-password, roles: PUBLIC_ACCESS }
+        # - { path: ^/api, roles: IS_AUTHENTICATED_FULLY, methods: [POST, PUT, PATCH, DELETE] }
+
+    role_hierarchy:
+        ROLE_ARTIST: ROLE_USER
+        ROLE_ADMIN: ROLE_USER
+        ROLE_SUPER_ADMIN: ROLE_ADMIN
+
+when@test:
+    security:
+        password_hashers:
+            # By default, password hashers are resource intensive and take time. This is
+            # important to generate secure password hashes. In tests however, secure hashes
+            # are not important, waste resources and increase test times. The following
+            # reduces the work factor to the lowest possible values.
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # Lowest possible value for bcrypt
+                time_cost: 3 # Lowest possible value for argon
+                memory_cost: 10 # Lowest possible value for argon

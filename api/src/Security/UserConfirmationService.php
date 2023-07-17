@@ -2,40 +2,30 @@
 
 namespace App\Security;
 
-use App\Exception\InvalidConfirmationTokenException;
+use Psr\Log\LoggerInterface;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
+use App\Exception\InvalidConfirmationTokenException;
 
 class UserConfirmationService
 {
+	public function __construct(private LoggerInterface $logger, private UserRepository $userRepository, private EntityManagerInterface $entityManager) {}
 
-    public function __construct(
-        private UserRepository $userRepository,
-        private EntityManagerInterface $entityManager,
-        private LoggerInterface $logger
-    )
-    {
-    }
+	public function confirmUser(string $confirmationToken)
+	{
+		$this->logger->debug('Fetching user by confirmation token');
+		$user = $this->userRepository->findOneBy(compact('confirmationToken'));
 
-    public function confirmUser(string $confirmationToken)
-    {
-        $this->logger->debug('Fetching user by confirmation token');
+		// User was NOT found by confirmation token
+		if (!$user) {
+			$this->logger->debug('User by confirmation token not found');
+			throw new InvalidConfirmationTokenException();
+		}
 
-        $user = $this->userRepository->findOneBy(
-            ['confirmationToken' => $confirmationToken]
-        );
+		$user->setEnabled(true);
+		$user->setConfirmationToken(null);
+		$this->entityManager->flush();
 
-        // User was NOT found by confirmation token
-        if (!$user) {
-            $this->logger->debug('User by confirmation token not found');
-            throw new InvalidConfirmationTokenException();
-        }
-
-        $user->setEnabled(true);
-        $user->setConfirmationToken(null);
-        $this->entityManager->flush();
-
-        $this->logger->debug('Confirmed user by confirmation token');
-    }
+		$this->logger->debug('Confirmed user by confirmation token');
+	}
 }

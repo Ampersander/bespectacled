@@ -14,7 +14,7 @@ use Symfony\Component\Security\Core\Exception\AccountStatusException;
 
 class UserEnabledChecker implements UserCheckerInterface
 {
-    
+
     public function checkPreAuth(UserInterface $user)
     {
         if (!$user instanceof User) {
