@@ -87,6 +87,7 @@ jobs:
       # name: codecov-umbrella
       #fail_ci_if_error: true
   build-and-push:
+    needs: php-unit-and-functional-tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
