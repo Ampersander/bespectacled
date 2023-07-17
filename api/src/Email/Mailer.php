@@ -81,7 +81,7 @@ class Mailer extends AbstractController
 	public function sendAskToBecomeArtist($user): void
 	{
 		$email = (new TemplatedEmail())
-			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+			->from(new Address('admin@bespectacled.com', 'BeSpectacled'))
 			->to('admin@bespectacled.com')
 			->subject('A user ask to become an artist!')
 			->htmlTemplate('emails/ask-to-become-artist.html.twig')
@@ -97,7 +97,7 @@ class Mailer extends AbstractController
 	public function sendBookingValidated($booking): void
 	{
 		$email = (new TemplatedEmail())
-			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+			->from(new Address('admin@bespectacled.com', 'BeSpectacled'))
 			->to($booking->getClient()->getEmail())
 			->subject('Your booking is validated!')
 			->htmlTemplate('emails/booking-validated.html.twig')
@@ -115,7 +115,7 @@ class Mailer extends AbstractController
 	public function sendBookingCancelled($booking): void
 	{
 		$email = (new TemplatedEmail())
-			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+			->from(new Address('admin@bespectacled.com', 'BeSpectacled'))
 			->to($booking->getClient()->getEmail())
 			->subject('Your booking is cancelled!')
 			->htmlTemplate('emails/booking-cancelled.html.twig')
@@ -132,7 +132,7 @@ class Mailer extends AbstractController
 	public function sendAskBooking($booking): void
 	{
 		$email = (new TemplatedEmail())
-			->from(new Address('contact@bespectacled.com', 'BeSpectacled'))
+			->from(new Address('admin@bespectacled.com', 'BeSpectacled'))
 			->to($booking->getClient()->getEmail())
 			->subject('A user ask to book a venue!')
 			->htmlTemplate('emails/ask-booking.html.twig')
