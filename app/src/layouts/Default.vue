@@ -112,11 +112,6 @@ const toggle = () => {
 
 const logout = () => store.logout()
 
-const resendVerificationEmail = () => {
-	// TODO $store.dispatch('auth/resendVerificationEmail')
-	alert('This feature has not been implemented yet.')
-}
-
 onBeforeMount(() => theme.global.name.value = utilsStore.dark ? 'dark' : 'light')
 
 // Register shortcuts

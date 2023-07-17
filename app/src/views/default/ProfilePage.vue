@@ -151,17 +151,13 @@ onBeforeUnmount(() => store.$reset())
 <template>
 	<v-alert v-if="error || authError" type="error" class="mb-4" v-text="error || authError" closable />
 
-
 	<Toolbar v-if="$route.name === 'profile'" color="primary-darken-1" :breadcrumb="breadcrumb" :is-loading="authIsLoading" main :partnered="item?.roles.includes('ASK_TO_BECOME_ARTIST')" @partner="partner(inputs)" @cancel-partner="cancelPartner(inputs)" />
 	<Toolbar v-else color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item?.username ?? '', to: { name: 'artists' }}]" :is-loading="isLoading || authIsLoading" :nav="nav" main @nav="silentPush" />
-	<Toolbar v-if="$route.name === 'profile'" color="primary-darken-1" :breadcrumb="breadcrumb" :is-loading="authIsLoading"
-		main />
-	<Toolbar v-else color="primary-darken-1"
-		:breadcrumb="[...breadcrumb, { title: item?.username ?? '', to: { name: 'artists' } }]"
-		:is-loading="isLoading || authIsLoading" :nav="nav" main @nav="silentPush" />
 
 	<v-tabs v-model="tab" color="primary" fixed-tabs>
-		<v-tab v-for="tab, i in tabs" :="tab" :value="i" />
+		<template v-for="tab, i in tabs">
+			<v-tab v-if="tab.if" :="tab" :value="i" />
+		</template>
 	</v-tabs>
 
 	<v-window v-if="item" v-model="tab" class="bg-surface-darken-1">
@@ -171,17 +167,32 @@ onBeforeUnmount(() => store.$reset())
 					<v-card-text>
 						<v-row>
 							<v-col cols="12" sm="6">
-								<v-text-field v-model="inputs.username" :error="Boolean(violations?.username)"
+								<v-text-field
+									v-model="inputs.username"
+									:error="Boolean(violations?.username)"
 									:error-messages="violations?.username || v$.username?.$errors.map((e: any) => e.$message)"
-									:counter="20" label="Username*" required clearable @input="v$.username.$touch"
-									@blur="v$.username.$touch" />
+									:counter="20"
+									label="Username*"
+									required
+									clearable
+									@input="v$.username.$touch"
+									@blur="v$.username.$touch"
+								/>
 							</v-col>
 
 							<v-col cols="12" sm="6">
-								<v-text-field v-model="inputs.email" :error="Boolean(violations?.email)"
+								<v-text-field
+									v-model="inputs.email"
+									:error="Boolean(violations?.email)"
 									:error-messages="violations?.email || v$.email?.$errors.map((e: any) => e.$message)"
-									:counter="50" label="Email*" type="email" required clearable @input="v$.email.$touch"
-									@blur="v$.email.$touch" />
+									:counter="50"
+									label="Email*"
+									type="email"
+									required
+									clearable
+									@input="v$.email.$touch"
+									@blur="v$.email.$touch"
+								/>
 							</v-col>
 						</v-row>
 					</v-card-text>
@@ -190,21 +201,17 @@ onBeforeUnmount(() => store.$reset())
 						<v-spacer />
 
 						<v-btn :disabled="!v$.$anyDirty" color="primary" @click="form?.reset()" type="reset">Reset</v-btn>
-						<v-btn :loading="utilsStore.isLoading" color="primary" variant="elevated" type="submit"
-							@click="v$.$validate">Edit Profile</v-btn>
+						<v-btn :loading="utilsStore.isLoading" color="primary" variant="elevated" type="submit" @click="v$.$validate">Edit Profile</v-btn>
 					</v-card-actions>
 				</v-form>
 			</v-card>
 		</v-window-item>
 
 		<v-window-item value="1">
-			<!-- Send request to become a partnered artist -->
-			<v-btn text="Become a Partnered Artist" color="primary" class="mb-4" />
-
-			<v-row v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
+			<v-row v-if="item.events.length > 0" v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
 				<v-col cols="12" sm="10" order-sm="1">
 					<v-card-title class="font-title">
-						<router-link v-if="item.id" :to="{ name: 'event', params: { id: event.id } }">
+						<router-link v-if="item.id" :to="{ name: 'event', params: { id: event.id }}">
 							{{ event.title }}
 						</router-link>
 
@@ -214,8 +221,7 @@ onBeforeUnmount(() => store.$reset())
 						</span>
 					</v-card-title>
 
-					<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm"
-						v-html="DOMPurify.sanitize(marked(event.description, { mangle: false, headerIds: false }))" />
+					<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm" v-html="DOMPurify.sanitize(marked(event.description, { mangle: false, headerIds: false }))" />
 				</v-col>
 
 				<v-col cols="12" sm="2">
