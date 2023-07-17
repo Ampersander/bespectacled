@@ -61,8 +61,8 @@ const rules = {
 }
 
 const tabs = [
-	{ text: 'general', 'prepend-icon': 'fa fa-info' },
-	{ text: 'events', 'prepend-icon': 'fa fa-star' }
+	{ text: 'general', 'prepend-icon': 'fa fa-info', if: true },
+	{ text: 'events', 'prepend-icon': 'fa fa-star', if: item?.value?.events && item.value.events.length > 0 }
 ]
 
 if (route.name !== 'profile') tabs.shift()
@@ -154,7 +154,9 @@ onBeforeUnmount(() => store.$reset())
 	<Toolbar v-else color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item?.username ?? '', to: { name: 'artists' }}]" :is-loading="isLoading || authIsLoading" :nav="nav" main @nav="silentPush" />
 
 	<v-tabs v-model="tab" color="primary" fixed-tabs>
-		<v-tab v-for="tab, i in tabs" :="tab" :value="i" />
+		<template v-for="tab, i in tabs">
+			<v-tab v-if="tab.if" :="tab" :value="i" />
+		</template>
 	</v-tabs>
 
 	<v-window v-if="item" v-model="tab" class="bg-surface-darken-1">
@@ -205,10 +207,7 @@ onBeforeUnmount(() => store.$reset())
 		</v-window-item>
 
 		<v-window-item value="1">
-			<!-- Send request to become a partnered artist -->
-			<v-btn text="Become a Partnered Artist" color="primary" class="mb-4" />
-
-			<v-row v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
+			<v-row v-if="item.events.length > 0" v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
 				<v-col cols="12" sm="10" order-sm="1">
 					<v-card-title class="font-title">
 						<router-link v-if="item.id" :to="{ name: 'event', params: { id: event.id }}">
