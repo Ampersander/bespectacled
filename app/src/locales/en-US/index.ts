@@ -28,6 +28,8 @@ export default {
 	itemNotFound: 'No item found. Please reload.',
 	confirmDelete: 'Are you sure you want to delete this item?',
 	loading: 'Loading...',
+	partner: 'Send partnership request',
+	cancelPartner: 'Cancel partnership request',
 	user,
 	event,
 	venue,

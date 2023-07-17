@@ -110,7 +110,7 @@ class StripeService
         }
 
         //find the number of place with the state TicketStatusEnum::CREATE with the schedule
-        
+
         $numberTicket = $event->getTickets()->filter(function ($ticket) use ($schedule, $date, $time) {
             return $ticket->getStatus() === TicketStatusEnum::CREATE && $schedule->getDate() === $date && in_array($time, $schedule->getTimes());
         })->count();
@@ -159,7 +159,7 @@ class StripeService
         try {
             $stripe = new \Stripe\StripeClient($this->stripeSK);
 
-           
+
             $pi = explode("_secret_", $paymentIntentId)[0];
             $paymentIntent = $stripe->paymentIntents->retrieve(
                 $pi,

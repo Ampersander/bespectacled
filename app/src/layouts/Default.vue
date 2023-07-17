@@ -7,6 +7,7 @@ import { useDate } from 'vuetify/labs/date'
 
 import Carousel from '@/components/custom/Carousel.vue'
 import NotFound from '@/components/custom/NotFound.vue'
+import BackToTop from '@/components/common/BackToTop.vue'
 import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore, useUtilsStore, useVenueListStore } from '@/store'
 
 const date = useDate()
@@ -270,17 +271,28 @@ watchEffect(() => {
 				</template>
 			</v-snackbar>
 
+			<BackToTop />
+
+			<v-banner
+				v-if="user && user?.roles?.includes('ASK_TO_BECOME_ARTIST') && $route.name != 'profile'"
+				style="z-index: 3;"
+				class="align-center position-fixed"
+				:class="scrolled ? 'mt-0' : 'mt-8'"
+				icon="$info"
+				color="info"
+				lines="one"
+				sticky
+			>
+				<v-banner-text>
+					Your partnership request is pending approval. You will be notified via email once it is approved.
+				</v-banner-text>
+
+				<template #actions>
+					<v-btn text="Cancel Request" @click="$router.push({ name: 'profile' })" />
+				</template>
+			</v-banner>
+
 			<v-main style="--v-layout-top: 48px;">
-				<v-banner v-if="user && user?.roles?.includes('ROLE_UNVERIFIED')" class="align-center" icon="$info" color="info" lines="one" sticky>
-					<v-banner-text>
-						You need to verify your email address before you can continue.
-					</v-banner-text>
-
-					<template #actions>
-						<v-btn @click="resendVerificationEmail">Resend verification email</v-btn>
-					</template>
-				</v-banner>
-
 				<Carousel class="mt-n12" v-if="$route.name === 'home'" />
 				<NotFound class="mt-n12" v-if="$route.name === 'not-found'" />
 

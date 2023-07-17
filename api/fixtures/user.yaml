@@ -1,5 +1,5 @@
 parameters:
-  hash: '$2y$13$7bkYkOPNhCqyo/rJ2cdp4uQa/4No.RWsHn9pKDXQEJ6EjNCEfymTW'
+  hash: '$2y$13$tGIaqkEM.iVqquRMK43qyO4UN5hNvjIbIVEFOl2hGDHVcQgvMN/9u'
   artists:
     - { username: 'Billy Joel' }
     - { username: 'Taylor Swift' }
@@ -27,7 +27,7 @@ App\Entity\User:
     enabled: true
   user{1..5}:
     email: 'user<current()>\@bespectacled.com'
-    roles: "[ROLE_USER]"
+    roles: "[]"
     password: <{hash}>
     username: 'User <current()>'
     enabled: true
